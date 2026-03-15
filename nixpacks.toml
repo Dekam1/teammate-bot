@@ -1,5 +1,8 @@
+[phases.setup]
+nixPkgs = ["python311"]
+
 [phases.install]
-cmds = ["pip install --upgrade pip setuptools wheel", "pip install -r requirements.txt"]
+cmds = ["python3.11 -m pip install --upgrade pip", "python3.11 -m pip install -r requirements.txt"]
 
 [start]
-cmd = "python bot/main.py & uvicorn server:app --host 0.0.0.0 --port $PORT"
+cmd = "python3.11 bot/main.py & python3.11 -m uvicorn server:app --host 0.0.0.0 --port $PORT"
