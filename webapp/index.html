@@ -1,1 +1,527 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>TeammateFind</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0f0f13;
+    --card: #1a1a24;
+    --accent: #6c63ff;
+    --accent2: #ff6b9d;
+    --text: #ffffff;
+    --text2: #9999bb;
+    --green: #4ade80;
+    --radius: 20px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; min-height: 100vh; overflow-x: hidden; }
 
+  .screen { display: none; flex-direction: column; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* HEADER */
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; }
+  .logo { font-size: 20px; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header-actions { display: flex; gap: 10px; }
+  .icon-btn { width: 40px; height: 40px; border-radius: 12px; background: var(--card); border: none; color: var(--text); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+  /* CARDS */
+  .card-stack { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 20px; position: relative; }
+  .profile-card { width: 100%; max-width: 380px; border-radius: var(--radius); overflow: hidden; background: var(--card); position: absolute; transition: transform 0.3s ease, opacity 0.3s ease; cursor: grab; user-select: none; }
+  .profile-card:active { cursor: grabbing; }
+  .profile-card.swiping-right { transform: translateX(120%) rotate(15deg); opacity: 0; }
+  .profile-card.swiping-left { transform: translateX(-120%) rotate(-15deg); opacity: 0; }
+  .card-img { width: 100%; height: 320px; object-fit: cover; background: linear-gradient(135deg, #1e1e2e, #2a2a3e); display: flex; align-items: center; justify-content: center; font-size: 80px; }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .card-body { padding: 16px 20px 20px; }
+  .card-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .card-age { color: var(--text2); font-size: 14px; margin-bottom: 12px; }
+  .card-bio { color: var(--text2); font-size: 14px; line-height: 1.5; margin-bottom: 14px; }
+
+  /* GAMES TAGS */
+  .games-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .game-tag { padding: 6px 12px; border-radius: 30px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+  .game-tag.dota2 { background: #1a1a3e; color: #7c7cff; border: 1px solid #3a3a6e; }
+  .game-tag.cs2 { background: #1a2e1a; color: #4ade80; border: 1px solid #2a4e2a; }
+  .game-tag.valorant { background: #2e1a1a; color: #ff4654; border: 1px solid #4e2a2a; }
+  .game-tag.mobile_legends { background: #2e1a2e; color: #c084fc; border: 1px solid #4e2a4e; }
+  .game-tag.pubg { background: #2e2a1a; color: #fbbf24; border: 1px solid #4e4a2a; }
+  .game-tag.lol { background: #1a2a2e; color: #22d3ee; border: 1px solid #2a4a4e; }
+
+  .roles-text { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  /* PREMIUM BADGE */
+  .premium-badge { display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+
+  /* ACTIONS */
+  .actions { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 16px 20px 24px; }
+  .action-btn { width: 64px; height: 64px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s, opacity 0.15s; }
+  .action-btn:active { transform: scale(0.9); }
+  .btn-skip { background: #1a1a24; border: 2px solid #333; color: #999; }
+  .btn-super { background: linear-gradient(135deg, #3b82f6, #6366f1); width: 52px; height: 52px; }
+  .btn-like { background: linear-gradient(135deg, #ec4899, #f43f5e); }
+  .btn-boost { background: linear-gradient(135deg, #f59e0b, #ef4444); width: 52px; height: 52px; }
+
+  /* LIKE/NOPE INDICATORS */
+  .indicator { position: absolute; top: 30px; padding: 8px 16px; border-radius: 8px; font-size: 28px; font-weight: 900; opacity: 0; transform: rotate(-15deg); pointer-events: none; z-index: 10; }
+  .indicator.like { left: 20px; color: #4ade80; border: 3px solid #4ade80; transform: rotate(-15deg); }
+  .indicator.nope { right: 20px; color: #f43f5e; border: 3px solid #f43f5e; transform: rotate(15deg); }
+  .indicator.visible { opacity: 1; }
+
+  /* MATCH SCREEN */
+  .match-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; padding: 40px 20px; text-align: center; }
+  .match-screen.show { display: flex; }
+  .match-title { font-size: 36px; font-weight: 900; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+  .match-sub { color: var(--text2); font-size: 16px; margin-bottom: 32px; }
+  .match-avatars { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
+  .match-avatar { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 4px solid var(--accent); background: var(--card); display: flex; align-items: center; justify-content: center; font-size: 40px; }
+  .match-heart { font-size: 32px; }
+  .match-name { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .match-game { color: var(--text2); font-size: 14px; margin-bottom: 24px; }
+  .btn-primary { width: 100%; padding: 16px; border-radius: 16px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; color: white; font-size: 16px; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
+  .btn-secondary { width: 100%; padding: 14px; border-radius: 16px; background: var(--card); border: 1px solid #333; color: var(--text2); font-size: 15px; cursor: pointer; }
+
+  /* EMPTY STATE */
+  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
+  .empty-icon { font-size: 64px; margin-bottom: 20px; }
+  .empty-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .empty-sub { color: var(--text2); font-size: 15px; line-height: 1.5; }
+
+  /* MATCHES LIST */
+  .matches-list { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+  .match-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid #1a1a2e; }
+  .match-item-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--card); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  .match-item-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .match-item-info { flex: 1; }
+  .match-item-name { font-weight: 600; margin-bottom: 3px; }
+  .match-item-games { color: var(--text2); font-size: 13px; }
+  .match-item-action { color: var(--accent); font-size: 20px; }
+
+  /* BOTTOM NAV */
+  .bottom-nav { display: flex; background: var(--card); border-top: 1px solid #1a1a2e; padding: 8px 0 max(8px, env(safe-area-inset-bottom)); }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px; cursor: pointer; color: var(--text2); font-size: 11px; border: none; background: none; transition: color 0.2s; }
+  .nav-item.active { color: var(--accent); }
+  .nav-icon { font-size: 22px; }
+
+  /* FILTERS PANEL */
+  .filters-panel { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-radius: 24px 24px 0 0; padding: 20px 20px 40px; transform: translateY(100%); transition: transform 0.3s ease; z-index: 50; }
+  .filters-panel.open { transform: translateY(0); }
+  .filter-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; z-index: 49; }
+  .filter-overlay.show { display: block; }
+  .filters-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .filter-label { font-size: 13px; color: var(--text2); margin-bottom: 8px; }
+  .filter-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .chip { padding: 7px 14px; border-radius: 20px; border: 1px solid #333; background: none; color: var(--text2); font-size: 13px; cursor: pointer; transition: all 0.15s; }
+  .chip.active { border-color: var(--accent); background: rgba(108,99,255,0.15); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- BROWSE SCREEN -->
+<div class="screen active" id="screen-browse">
+  <div class="header">
+    <div class="logo">TeammateFind</div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="openFilters()">⚙️</button>
+      <button class="icon-btn" onclick="showScreen('matches')">💬</button>
+    </div>
+  </div>
+
+  <div class="card-stack" id="card-stack">
+    <div class="empty-state" id="empty-state" style="display:none">
+      <div class="empty-icon">🎮</div>
+      <div class="empty-title">Все просмотрены!</div>
+      <div class="empty-sub">Возвращайся позже — появятся новые игроки</div>
+    </div>
+    <!-- Cards injected here -->
+  </div>
+
+  <div class="actions">
+    <button class="action-btn btn-skip" onclick="swipe('left')">✕</button>
+    <button class="action-btn btn-super" onclick="superLike()">⭐</button>
+    <button class="action-btn btn-like" onclick="swipe('right')">♥</button>
+    <button class="action-btn btn-boost" onclick="boostProfile()">🚀</button>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="showScreen('browse')">
+      <span class="nav-icon">🎮</span>Найти
+    </button>
+    <button class="nav-item" onclick="showScreen('matches')">
+      <span class="nav-icon">💬</span>Матчи
+    </button>
+    <button class="nav-item" onclick="showScreen('profile')">
+      <span class="nav-icon">👤</span>Анкета
+    </button>
+    <button class="nav-item" onclick="showScreen('premium')">
+      <span class="nav-icon">💎</span>Премиум
+    </button>
+  </nav>
+</div>
+
+<!-- MATCHES SCREEN -->
+<div class="screen" id="screen-matches">
+  <div class="header">
+    <button class="icon-btn" onclick="showScreen('browse')">←</button>
+    <div class="logo">Мои матчи</div>
+    <div style="width:40px"></div>
+  </div>
+  <div class="matches-list" id="matches-list"></div>
+  <nav class="bottom-nav">
+    <button class="nav-item" onclick="showScreen('browse')"><span class="nav-icon">🎮</span>Найти</button>
+    <button class="nav-item active" onclick="showScreen('matches')"><span class="nav-icon">💬</span>Матчи</button>
+    <button class="nav-item" onclick="showScreen('profile')"><span class="nav-icon">👤</span>Анкета</button>
+    <button class="nav-item" onclick="showScreen('premium')"><span class="nav-icon">💎</span>Премиум</button>
+  </nav>
+</div>
+
+<!-- PREMIUM SCREEN -->
+<div class="screen" id="screen-premium">
+  <div class="header">
+    <button class="icon-btn" onclick="showScreen('browse')">←</button>
+    <div class="logo">💎 Премиум</div>
+    <div style="width:40px"></div>
+  </div>
+  <div style="padding:20px; flex:1">
+    <div style="background: linear-gradient(135deg, #1a1a3e, #2a1a3e); border-radius:20px; padding:24px; margin-bottom:20px; text-align:center">
+      <div style="font-size:48px; margin-bottom:12px">💎</div>
+      <div style="font-size:22px; font-weight:700; margin-bottom:6px">TeammateFind Premium</div>
+      <div style="color:#9999bb; font-size:14px">Больше возможностей для поиска</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px">
+      <div style="background:var(--card); border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px">
+        <span style="font-size:24px">❤️</span>
+        <div><div style="font-weight:600; margin-bottom:2px">Безлимитные лайки</div><div style="color:var(--text2); font-size:13px">Бесплатно: 10 лайков/день</div></div>
+      </div>
+      <div style="background:var(--card); border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px">
+        <span style="font-size:24px">👁️</span>
+        <div><div style="font-weight:600; margin-bottom:2px">Кто тебя лайкнул</div><div style="color:var(--text2); font-size:13px">Видишь всех, кто лайкнул анкету</div></div>
+      </div>
+      <div style="background:var(--card); border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px">
+        <span style="font-size:24px">🚀</span>
+        <div><div style="font-weight:600; margin-bottom:2px">Буст анкеты</div><div style="color:var(--text2); font-size:13px">Показывайся первым в поиске</div></div>
+      </div>
+      <div style="background:var(--card); border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px">
+        <span style="font-size:24px">🎯</span>
+        <div><div style="font-weight:600; margin-bottom:2px">Фильтр по рангу</div><div style="color:var(--text2); font-size:13px">Ищи игроков своего уровня</div></div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="buyPremium()">Оформить за 99₽/месяц</button>
+  </div>
+</div>
+
+<!-- MATCH MODAL -->
+<div class="match-screen" id="match-modal">
+  <div style="font-size:48px; margin-bottom:16px">🎉</div>
+  <div class="match-title">Это матч!</div>
+  <div class="match-sub">Вы оба лайкнули друг друга</div>
+  <div class="match-avatars">
+    <div class="match-avatar" id="match-my-avatar">👤</div>
+    <div class="match-heart">💜</div>
+    <div class="match-avatar" id="match-their-avatar">👤</div>
+  </div>
+  <div class="match-name" id="match-name"></div>
+  <div class="match-game" id="match-game"></div>
+  <button class="btn-primary" id="match-write-btn">Написать сообщение</button>
+  <button class="btn-secondary" onclick="closeMatch()">Продолжить поиск</button>
+</div>
+
+<!-- FILTERS -->
+<div class="filter-overlay" id="filter-overlay" onclick="closeFilters()"></div>
+<div class="filters-panel" id="filters-panel">
+  <div class="filters-title">Фильтры</div>
+  <div class="filter-label">Игра</div>
+  <div class="filter-chips" id="filter-games">
+    <button class="chip active" data-game="all" onclick="toggleFilter(this,'game')">Все</button>
+    <button class="chip" data-game="dota2" onclick="toggleFilter(this,'game')">🎮 Dota 2</button>
+    <button class="chip" data-game="cs2" onclick="toggleFilter(this,'game')">🔫 CS2</button>
+    <button class="chip" data-game="valorant" onclick="toggleFilter(this,'game')">⚡ Valorant</button>
+    <button class="chip" data-game="mobile_legends" onclick="toggleFilter(this,'game')">📱 ML</button>
+    <button class="chip" data-game="pubg" onclick="toggleFilter(this,'game')">🪖 PUBG</button>
+    <button class="chip" data-game="lol" onclick="toggleFilter(this,'game')">⚔️ LoL</button>
+  </div>
+  <div class="filter-label">Ищу</div>
+  <div class="filter-chips">
+    <button class="chip active" data-seek="any" onclick="toggleFilter(this,'seek')">Всех</button>
+    <button class="chip" data-seek="male" onclick="toggleFilter(this,'seek')">👦 Парней</button>
+    <button class="chip" data-seek="female" onclick="toggleFilter(this,'seek')">👧 Девушек</button>
+  </div>
+  <button class="btn-primary" onclick="applyFilters()" style="margin-top:8px">Применить</button>
+</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const GAME_INFO = {
+  dota2: { name: "Dota 2", emoji: "🎮" },
+  cs2: { name: "CS2", emoji: "🔫" },
+  valorant: { name: "Valorant", emoji: "⚡" },
+  mobile_legends: { name: "Mobile Legends", emoji: "📱" },
+  pubg: { name: "PUBG Mobile", emoji: "🪖" },
+  lol: { name: "League of Legends", emoji: "⚔️" }
+};
+
+const API_URL = window.location.origin + "/api";
+let profiles = [];
+let currentIndex = 0;
+let isDragging = false, startX = 0, currentX = 0;
+let filters = { game: "all", seek: "any" };
+
+// Demo profiles for preview
+const DEMO_PROFILES = [
+  { id: 1, name: "Алексей", age: 20, gender: "male", bio: "Ищу ADC в LoL, играю Support. Спокойный, не флеймлю 🙏", avatar_file_id: null, is_premium: true, games: [{ game: "lol", rank: "Gold", roles: ["Support","Jungler"] }, { game: "dota2", rank: "Archon", roles: ["Hard Support"] }] },
+  { id: 2, name: "Настя", age: 19, gender: "female", bio: "Midlaner в Dota, ищу нормальных тиммейтов без токсика", avatar_file_id: null, is_premium: false, games: [{ game: "dota2", rank: "Legend", roles: ["Midlaner"] }, { game: "valorant", rank: "Platinum", roles: ["Duelist"] }] },
+  { id: 3, name: "Дима", age: 22, gender: "male", bio: "CS2 faceit 10, ищу стак. Серьёзно отношусь к игре.", avatar_file_id: null, is_premium: false, games: [{ game: "cs2", rank: "Global", roles: ["AWPer","Entry Fragger"] }] },
+  { id: 4, name: "Катя", age: 21, gender: "female", bio: "Mobile Legends Mythic, ищу стабильный стак для рейтинга", avatar_file_id: null, is_premium: true, games: [{ game: "mobile_legends", rank: "Mythic", roles: ["Gold Lane","Roam"] }] },
+];
+
+async function loadProfiles() {
+  try {
+    const userId = tg?.initDataUnsafe?.user?.id;
+    if (!userId) { profiles = DEMO_PROFILES; renderCard(); return; }
+    const res = await fetch(`${API_URL}/profiles?user_id=${userId}&game=${filters.game}&seek=${filters.seek}`);
+    if (res.ok) { profiles = await res.json(); }
+    else { profiles = DEMO_PROFILES; }
+  } catch { profiles = DEMO_PROFILES; }
+  currentIndex = 0;
+  renderCard();
+}
+
+function renderCard() {
+  const stack = document.getElementById("card-stack");
+  const existing = stack.querySelectorAll(".profile-card");
+  existing.forEach(c => c.remove());
+
+  if (currentIndex >= profiles.length) {
+    document.getElementById("empty-state").style.display = "flex";
+    return;
+  }
+  document.getElementById("empty-state").style.display = "none";
+
+  for (let i = Math.min(currentIndex + 1, profiles.length - 1); i >= currentIndex; i--) {
+    const p = profiles[i];
+    const card = createCard(p);
+    if (i === currentIndex) {
+      card.style.zIndex = 10;
+      setupDrag(card, p);
+    } else {
+      card.style.zIndex = 5;
+      card.style.transform = "scale(0.95) translateY(10px)";
+      card.style.opacity = "0.7";
+    }
+    stack.appendChild(card);
+  }
+}
+
+function createCard(p) {
+  const card = document.createElement("div");
+  card.className = "profile-card";
+  card.dataset.id = p.id;
+
+  const avatarContent = p.avatar_file_id
+    ? `<img src="${API_URL}/photo/${p.avatar_file_id}" alt="${p.name}">`
+    : `<span style="font-size:80px">👤</span>`;
+
+  const gamesHtml = (p.games || []).map(g => {
+    const info = GAME_INFO[g.game] || { emoji: "🎮", name: g.game };
+    const rolesStr = g.roles?.length ? `<div class="roles-text">${g.roles.join(", ")}</div>` : "";
+    const rankStr = g.rank ? ` · ${g.rank}` : "";
+    return `<div><div class="game-tag ${g.game}">${info.emoji} ${info.name}${rankStr}</div>${rolesStr}</div>`;
+  }).join("");
+
+  const premiumBadge = p.is_premium ? `<div class="premium-badge">💎 Premium</div>` : "";
+
+  card.innerHTML = `
+    <div class="indicator like">ЛАЙК</div>
+    <div class="indicator nope">ПРОПУСК</div>
+    <div class="card-img">${avatarContent}</div>
+    <div class="card-body">
+      ${premiumBadge}
+      <div class="card-name">${p.name}</div>
+      <div class="card-age">${p.age} лет · ${p.gender === 'male' ? 'Парень' : p.gender === 'female' ? 'Девушка' : '–'}</div>
+      ${p.bio ? `<div class="card-bio">${p.bio}</div>` : ""}
+      <div class="games-list">${gamesHtml}</div>
+    </div>
+  `;
+  return card;
+}
+
+function setupDrag(card, profile) {
+  let startX, startY, moved = false;
+
+  card.addEventListener("mousedown", e => { startX = e.clientX; startY = e.clientY; isDragging = true; moved = false; });
+  card.addEventListener("touchstart", e => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; isDragging = true; moved = false; }, { passive: true });
+
+  document.addEventListener("mousemove", e => {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    moved = Math.abs(dx) > 5;
+    card.style.transform = `translateX(${dx}px) rotate(${dx * 0.05}deg)`;
+    const likeInd = card.querySelector(".indicator.like");
+    const nopeInd = card.querySelector(".indicator.nope");
+    likeInd.style.opacity = Math.max(0, dx / 80);
+    nopeInd.style.opacity = Math.max(0, -dx / 80);
+  });
+
+  document.addEventListener("touchmove", e => {
+    if (!isDragging) return;
+    const dx = e.touches[0].clientX - startX;
+    moved = Math.abs(dx) > 5;
+    card.style.transform = `translateX(${dx}px) rotate(${dx * 0.05}deg)`;
+    const likeInd = card.querySelector(".indicator.like");
+    const nopeInd = card.querySelector(".indicator.nope");
+    likeInd.style.opacity = Math.max(0, dx / 80);
+    nopeInd.style.opacity = Math.max(0, -dx / 80);
+  }, { passive: true });
+
+  const endDrag = (clientX) => {
+    if (!isDragging) return;
+    isDragging = false;
+    const dx = clientX - startX;
+    if (Math.abs(dx) > 80) {
+      finishSwipe(card, profile, dx > 0 ? "right" : "left");
+    } else {
+      card.style.transform = "";
+      card.querySelectorAll(".indicator").forEach(i => i.style.opacity = 0);
+    }
+  };
+
+  document.addEventListener("mouseup", e => endDrag(e.clientX));
+  document.addEventListener("touchend", e => endDrag(e.changedTouches[0].clientX));
+}
+
+function swipe(dir) {
+  if (currentIndex >= profiles.length) return;
+  const card = document.querySelector(".profile-card[style*='z-index: 10'], .profile-card:last-child");
+  const profile = profiles[currentIndex];
+  if (card) finishSwipe(card, profile, dir);
+}
+
+function finishSwipe(card, profile, dir) {
+  card.classList.add(dir === "right" ? "swiping-right" : "swiping-left");
+  if (dir === "right") sendLike(profile);
+  setTimeout(() => { card.remove(); currentIndex++; renderCard(); }, 300);
+}
+
+async function sendLike(profile) {
+  const userId = tg?.initDataUnsafe?.user?.id;
+  if (!userId) { showMatchDemo(profile); return; }
+  try {
+    const res = await fetch(`${API_URL}/like`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ from_id: userId, to_id: profile.id })
+    });
+    const data = await res.json();
+    if (data.matched) showMatch(profile);
+  } catch { showMatchDemo(profile); }
+}
+
+function showMatchDemo(profile) {
+  if (Math.random() > 0.7) showMatch(profile);
+}
+
+function showMatch(profile) {
+  document.getElementById("match-name").textContent = profile.name;
+  const games = (profile.games || []).map(g => (GAME_INFO[g.game]?.emoji || "🎮") + " " + (GAME_INFO[g.game]?.name || g.game)).join(", ");
+  document.getElementById("match-game").textContent = games;
+  document.getElementById("match-modal").classList.add("show");
+  const writeBtn = document.getElementById("match-write-btn");
+  if (profile.username) {
+    writeBtn.onclick = () => { tg?.close(); openLink(`https://t.me/${profile.username}`); };
+  } else {
+    writeBtn.textContent = "Написать через бота";
+    writeBtn.onclick = () => { tg?.sendData(JSON.stringify({ action: "write", to_id: profile.id })); };
+  }
+}
+
+function closeMatch() { document.getElementById("match-modal").classList.remove("show"); }
+
+function superLike() {
+  if (currentIndex >= profiles.length) return;
+  const profile = profiles[currentIndex];
+  tg?.HapticFeedback?.impactOccurred("heavy");
+  swipe("right");
+}
+
+function boostProfile() {
+  tg?.HapticFeedback?.notificationOccurred("warning");
+  alert("💎 Буст доступен в Premium! Оформи подписку за 99₽/мес");
+}
+
+function buyPremium() {
+  tg?.sendData(JSON.stringify({ action: "buy_premium" }));
+}
+
+function showScreen(name) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-" + name).classList.add("active");
+  if (name === "matches") loadMatches();
+  document.querySelectorAll(".nav-item").forEach((b, i) => {
+    const screens = ["browse","matches","profile","premium"];
+    b.classList.toggle("active", screens[i] === name);
+  });
+}
+
+async function loadMatches() {
+  const list = document.getElementById("matches-list");
+  list.innerHTML = "";
+  const userId = tg?.initDataUnsafe?.user?.id;
+  let matches = [];
+  if (userId) {
+    try {
+      const res = await fetch(`${API_URL}/matches?user_id=${userId}`);
+      if (res.ok) matches = await res.json();
+    } catch {}
+  }
+  if (!matches.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет матчей пока</div><div class="empty-sub">Лайкай анкеты и находи тиммейтов!</div></div>`;
+    return;
+  }
+  matches.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "match-item";
+    div.innerHTML = `
+      <div class="match-item-avatar">${m.avatar_file_id ? `<img src="${API_URL}/photo/${m.avatar_file_id}">` : "👤"}</div>
+      <div class="match-item-info">
+        <div class="match-item-name">${m.name}, ${m.age}</div>
+        <div class="match-item-games">${(m.games || []).map(g => GAME_INFO[g]?.name || g).join(", ")}</div>
+      </div>
+      <div class="match-item-action">→</div>
+    `;
+    div.onclick = () => m.username && openLink(`https://t.me/${m.username}`);
+    list.appendChild(div);
+  });
+}
+
+function openFilters() {
+  document.getElementById("filters-panel").classList.add("open");
+  document.getElementById("filter-overlay").classList.add("show");
+}
+
+function closeFilters() {
+  document.getElementById("filters-panel").classList.remove("open");
+  document.getElementById("filter-overlay").classList.remove("show");
+}
+
+function toggleFilter(btn, type) {
+  const parent = btn.parentElement;
+  parent.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function applyFilters() {
+  const activeGame = document.querySelector("#filter-games .chip.active");
+  if (activeGame) filters.game = activeGame.dataset.game;
+  closeFilters();
+  loadProfiles();
+}
+
+loadProfiles();
+</script>
+</body>
+</html>
