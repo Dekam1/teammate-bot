@@ -109,12 +109,8 @@ def profile_actions_keyboard(target_id, is_premium=False):
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def main_menu_keyboard(webapp_url):
-    return ReplyKeyboardMarkup(keyboard=[
-        [KeyboardButton(text="🎮 Найти тиммейта", web_app=WebAppInfo(url=webapp_url))],
-        [KeyboardButton(text="👤 Моя анкета"), KeyboardButton(text="⚙️ Настройки")],
-        [KeyboardButton(text="💎 Премиум"), KeyboardButton(text="❤️ Мои матчи")]
-    ], resize_keyboard=True)
+def main_menu_keyboard(webapp_url=None):
+    return None
 
 @dp.message(CommandStart())
 async def cmd_start(message: types.Message, state: FSMContext):
