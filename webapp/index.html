@@ -272,21 +272,15 @@ let isDragging = false, startX = 0, currentX = 0;
 let filters = { game: "all", seek: "any" };
 
 // Demo profiles for preview
-const DEMO_PROFILES = [
-  { id: 1, name: "Алексей", age: 20, gender: "male", bio: "Ищу ADC в LoL, играю Support. Спокойный, не флеймлю 🙏", avatar_file_id: null, is_premium: true, games: [{ game: "lol", rank: "Gold", roles: ["Support","Jungler"] }, { game: "dota2", rank: "Archon", roles: ["Hard Support"] }] },
-  { id: 2, name: "Настя", age: 19, gender: "female", bio: "Midlaner в Dota, ищу нормальных тиммейтов без токсика", avatar_file_id: null, is_premium: false, games: [{ game: "dota2", rank: "Legend", roles: ["Midlaner"] }, { game: "valorant", rank: "Platinum", roles: ["Duelist"] }] },
-  { id: 3, name: "Дима", age: 22, gender: "male", bio: "CS2 faceit 10, ищу стак. Серьёзно отношусь к игре.", avatar_file_id: null, is_premium: false, games: [{ game: "cs2", rank: "Global", roles: ["AWPer","Entry Fragger"] }] },
-  { id: 4, name: "Катя", age: 21, gender: "female", bio: "Mobile Legends Mythic, ищу стабильный стак для рейтинга", avatar_file_id: null, is_premium: true, games: [{ game: "mobile_legends", rank: "Mythic", roles: ["Gold Lane","Roam"] }] },
-];
 
 async function loadProfiles() {
   try {
     const userId = tg?.initDataUnsafe?.user?.id;
-    if (!userId) { profiles = DEMO_PROFILES; renderCard(); return; }
+    if (!userId) { profiles = []; renderCard(); return; }
     const res = await fetch(`${API_URL}/profiles?user_id=${userId}&game=${filters.game}&seek=${filters.seek}`);
     if (res.ok) { profiles = await res.json(); }
-    else { profiles = DEMO_PROFILES; }
-  } catch { profiles = DEMO_PROFILES; }
+    else { profiles = []; }
+  } catch { profiles = []; }
   currentIndex = 0;
   renderCard();
 }
