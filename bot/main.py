@@ -323,19 +323,79 @@ async def handle_like(callback: types.CallbackQuery):
 
     if matched:
         target = await db.get_user(target_id)
-        await callback.answer("🎉 Это матч! Вы можете написать друг другу!", show_alert=True)
+        await callback.answer("🎉 Это матч!", show_alert=True)
+        my_username = f"@{callback.from_user.username}" if callback.from_user.username else "нет username"
+        target_username = f"@{target['username']}" if target.get('username') else "нет username"
+
+        kb_to_target = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text=f"✍️ Написать {target['name']}", url=f"https://t.me/{target['username']}")
+        ]]) if target.get('username') else None
+
+        match_text_me = (
+            f"🎉 <b>Это матч!</b>\n\n"
+            f"👤 <b>{target['name']}</b>, {target['age']} лет\n"
+            f"📝 {target.get('bio') or 'Нет описания'}\n\n"
+            f"Контакт: {target_username}"
+        )
+        if target.get('avatar_file_id'):
+            await bot.send_photo(callback.from_user.id, target['avatar_file_id'], caption=match_text_me, parse_mode="HTML", reply_markup=kb_to_target)
+        else:
+            await bot.send_message(callback.from_user.id, match_text_me, parse_mode="HTML", reply_markup=kb_to_target)
+
+        kb_to_me = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text=f"✍️ Написать {user['name']}", url=f"https://t.me/{callback.from_user.username}")
+        ]]) if callback.from_user.username else None
+
+        match_text_target = (
+            f"🎉 <b>Это матч!</b>\n\n"
+            f"👤 <b>{user['name']}</b>, {user['age']} лет\n"
+            f"📝 {user.get('bio') or 'Нет описания'}\n\n"
+            f"Контакт: {my_username}"
+        )
         try:
-            await bot.send_message(
-                target_id,
-                f"🎉 У тебя новый матч!\n"
-                f"Игрок <b>{user['name']}</b> тоже лайкнул тебя!\n"
-                f"Напиши ему: @{callback.from_user.username or 'пользователь'}",
-                parse_mode="HTML"
-            )
+            if user.get('avatar_file_id'):
+                await bot.send_photo(target_id, user['avatar_file_id'], caption=match_text_target, parse_mode="HTML", reply_markup=kb_to_me)
+            else:
+                await bot.send_message(target_id, match_text_target, parse_mode="HTML", reply_markup=kb_to_me)
         except Exception:
             pass
     else:
         await callback.answer("❤️ Лайк отправлен!")
+
+@dp.message(F.text == "❤️ Мои матчи")
+async def show_matches(message: types.Message):
+    user = await db.get_user(message.from_user.id)
+    if not user:
+        await message.answer("Сначала зарегистрируйся! /start")
+        return
+
+    matches = await db.get_matches(message.from_user.id)
+    if not matches:
+        await message.answer(
+            "💔 Матчей пока нет\n\n"
+            "Открывай свайп и лайкай игроков — когда кто-то лайкнет тебя в ответ, появится матч!"
+        )
+        return
+
+    await message.answer(f"❤️ <b>Твои матчи ({len(matches)}):</b>", parse_mode="HTML")
+
+    for m in matches:
+        games = await db.get_user_games(m['id'])
+        games_text = " ".join([GAMES.get(g['game'], {}).get('emoji', '🎮') + " " + GAMES.get(g['game'], {}).get('name', g['game']) for g in games])
+        username_str = f"@{m['username']}" if m.get('username') else "нет username"
+        text = (
+            f"👤 <b>{m['name']}</b>, {m['age']} лет\n"
+            f"🎮 {games_text}\n"
+            f"📝 {m.get('bio') or 'Нет описания'}\n"
+            f"Контакт: {username_str}"
+        )
+        kb = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="✍️ Написать", url=f"https://t.me/{m['username']}")
+        ]]) if m.get('username') else None
+        if m.get('avatar_file_id'):
+            await message.answer_photo(m['avatar_file_id'], caption=text, parse_mode="HTML", reply_markup=kb)
+        else:
+            await message.answer(text, parse_mode="HTML", reply_markup=kb)
 
 @dp.callback_query(F.data.startswith("skip:"))
 async def handle_skip(callback: types.CallbackQuery):
