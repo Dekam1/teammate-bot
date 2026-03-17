@@ -272,15 +272,40 @@ let isDragging = false, startX = 0, currentX = 0;
 let filters = { game: "all", seek: "any" };
 
 // Demo profiles for preview
+const DEMO_PROFILES = [
+  { id: 1, name: "Алексей", age: 20, gender: "male", bio: "Ищу ADC в LoL, играю Support. Спокойный, не флеймлю 🙏", avatar_file_id: null, is_premium: true, games: [{ game: "lol", rank: "Gold", roles: ["Support","Jungler"] }, { game: "dota2", rank: "Archon", roles: ["Hard Support"] }] },
+  { id: 2, name: "Настя", age: 19, gender: "female", bio: "Midlaner в Dota, ищу нормальных тиммейтов без токсика", avatar_file_id: null, is_premium: false, games: [{ game: "dota2", rank: "Legend", roles: ["Midlaner"] }, { game: "valorant", rank: "Platinum", roles: ["Duelist"] }] },
+  { id: 3, name: "Дима", age: 22, gender: "male", bio: "CS2 faceit 10, ищу стак. Серьёзно отношусь к игре.", avatar_file_id: null, is_premium: false, games: [{ game: "cs2", rank: "Global", roles: ["AWPer","Entry Fragger"] }] },
+  { id: 4, name: "Катя", age: 21, gender: "female", bio: "Mobile Legends Mythic, ищу стабильный стак для рейтинга", avatar_file_id: null, is_premium: true, games: [{ game: "mobile_legends", rank: "Mythic", roles: ["Gold Lane","Roam"] }] },
+];
 
 async function loadProfiles() {
   try {
     const userId = tg?.initDataUnsafe?.user?.id;
-    if (!userId) { profiles = []; renderCard(); return; }
-    const res = await fetch(`${API_URL}/profiles?user_id=${userId}&game=${filters.game}&seek=${filters.seek}`);
-    if (res.ok) { profiles = await res.json(); }
-    else { profiles = []; }
-  } catch { profiles = []; }
+    console.log('Telegram user ID:', userId, 'initDataUnsafe:', tg?.initDataUnsafe);
+    if (!userId) {
+      console.log('No user ID — showing demo profiles');
+      profiles = DEMO_PROFILES;
+      renderCard();
+      return;
+    }
+    const res = await fetch(`${API_URL}/api/profiles?user_id=${userId}&game=${filters.game}&seek=${filters.seek}`);
+    console.log('API response status:', res.status);
+    if (res.ok) {
+      profiles = await res.json();
+      console.log('Loaded profiles:', profiles.length);
+      if (profiles.length === 0) {
+        document.getElementById('empty-state').style.display = 'flex';
+        document.getElementById('empty-state').querySelector('.empty-title').textContent = 'Никого нет рядом';
+        document.getElementById('empty-state').querySelector('.empty-sub').textContent = 'Пока нет других игроков. Пригласи друзей!';
+      }
+    } else {
+      profiles = DEMO_PROFILES;
+    }
+  } catch(e) {
+    console.error('loadProfiles error:', e);
+    profiles = DEMO_PROFILES;
+  }
   currentIndex = 0;
   renderCard();
 }
@@ -405,7 +430,7 @@ async function sendLike(profile) {
   const userId = tg?.initDataUnsafe?.user?.id;
   if (!userId) { showMatchDemo(profile); return; }
   try {
-    const res = await fetch(`${API_URL}/like`, {
+    const res = await fetch(`${API_URL}/api/like`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ from_id: userId, to_id: profile.id })
@@ -468,7 +493,7 @@ async function loadMatches() {
   let matches = [];
   if (userId) {
     try {
-      const res = await fetch(`${API_URL}/matches?user_id=${userId}`);
+      const res = await fetch(`${API_URL}/api/matches?user_id=${userId}`);
       if (res.ok) matches = await res.json();
     } catch {}
   }
