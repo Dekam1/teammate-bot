@@ -119,7 +119,10 @@ def profile_actions_keyboard(target_id, is_premium=False):
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def main_menu_keyboard(webapp_url=None):
-    return None
+    return ReplyKeyboardMarkup(keyboard=[
+        [KeyboardButton(text="👤 Моя анкета"), KeyboardButton(text="❤️ Мои матчи")],
+        [KeyboardButton(text="💎 Премиум"), KeyboardButton(text="⚙️ Настройки")]
+    ], resize_keyboard=True)
 
 def edit_menu_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
