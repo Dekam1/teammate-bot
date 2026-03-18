@@ -22,11 +22,36 @@ def get_user(cur, user_id):
     row = cur.fetchone()
     return dict(row) if row else None
 
+async def get_user_games_text(cur, user_id):
+    cur.execute("SELECT game, rank, roles FROM user_games WHERE user_id = %s", (user_id,))
+    rows = cur.fetchall()
+    GAMES = {
+        "dota2": "🎮 Dota 2", "cs2": "🔫 CS2", "valorant": "⚡ Valorant",
+        "mobile_legends": "📱 Mobile Legends", "pubg": "🪖 PUBG", "lol": "⚔️ LoL"
+    }
+    parts = []
+    for r in rows:
+        name = GAMES.get(r['game'], r['game'])
+        rank = f" · {r['rank']}" if r.get('rank') else ""
+        roles = f" ({', '.join(r['roles'])})" if r.get('roles') else ""
+        parts.append(f"{name}{rank}{roles}")
+    return "\n".join(parts) if parts else "Не указаны"
+
 async def notify_user(client, sender_id, receiver):
+    # Получаем игры получателя
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    games_text = await get_user_games_text(cur, receiver['id'])
+    conn.close()
+
+    gender_labels = {"male": "Парень", "female": "Девушка", "any": "–"}
+    gender = gender_labels.get(receiver.get('gender', ''), '–')
+
     text = (
         f"🎉 *Это матч!*\n\n"
-        f"👤 *{receiver['name']}*, {receiver['age']} лет\n"
-        f"📝 {receiver.get('bio') or 'Нет описания'}"
+        f"👤 *{receiver['name']}*, {receiver['age']} лет · {gender}\n"
+        f"📝 {receiver.get('bio') or 'Нет описания'}\n\n"
+        f"🎮 *Игры:*\n{games_text}"
     )
     # Кнопка написать — через username или через tg://user?id=
     if receiver.get('username'):
@@ -42,14 +67,21 @@ async def notify_user(client, sender_id, receiver):
     }
     try:
         if receiver.get('avatar_file_id'):
-            payload = {"chat_id": sender_id, "photo": receiver['avatar_file_id'], "caption": text, "parse_mode": "Markdown"}
-            if reply_markup:
-                payload["reply_markup"] = reply_markup
+            payload = {
+                "chat_id": sender_id,
+                "photo": receiver['avatar_file_id'],
+                "caption": text,
+                "parse_mode": "Markdown",
+                "reply_markup": reply_markup
+            }
             await client.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto", json=payload)
         else:
-            payload = {"chat_id": sender_id, "text": text, "parse_mode": "Markdown"}
-            if reply_markup:
-                payload["reply_markup"] = reply_markup
+            payload = {
+                "chat_id": sender_id,
+                "text": text,
+                "parse_mode": "Markdown",
+                "reply_markup": reply_markup
+            }
             await client.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json=payload)
     except Exception as e:
         print(f"Notify error for {sender_id}: {e}")
