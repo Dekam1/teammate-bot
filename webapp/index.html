@@ -563,13 +563,14 @@ async function loadMatches() {
       </div>
       <div class="match-item-action">→</div>
     `;
-    div.onclick = () => {
-      if (m.username) {
-        openLink(`https://t.me/${m.username}`);
-      } else if (m.id) {
-        openLink(`tg://user?id=${m.id}`);
-      }
-    };
+    if (m.username) {
+      div.onclick = () => tg?.openTelegramLink(`https://t.me/${m.username}`);
+      div.querySelector('.match-item-action').textContent = '→';
+    } else {
+      div.querySelector('.match-item-action').textContent = '';
+      div.querySelector('.match-item-games').textContent += ' · напиши через бота';
+      div.style.cursor = 'default';
+    }
     list.appendChild(div);
   });
 }
