@@ -23,21 +23,23 @@ def get_user(cur, user_id):
     return dict(row) if row else None
 
 async def notify_user(client, sender_id, receiver):
-    username = f"@{receiver['username']}" if receiver.get('username') else "нет username"
     text = (
         f"🎉 *Это матч!*\n\n"
         f"👤 *{receiver['name']}*, {receiver['age']} лет\n"
-        f"📝 {receiver.get('bio') or 'Нет описания'}\n\n"
-        f"Контакт: {username}"
+        f"📝 {receiver.get('bio') or 'Нет описания'}"
     )
-    reply_markup = None
+    # Кнопка написать — через username или через tg://user?id=
     if receiver.get('username'):
-        reply_markup = {
-            "inline_keyboard": [[{
-                "text": f"✍️ Написать {receiver['name']}",
-                "url": f"https://t.me/{receiver['username']}"
-            }]]
-        }
+        write_url = f"https://t.me/{receiver['username']}"
+    else:
+        write_url = f"tg://user?id={receiver['id']}"
+    
+    reply_markup = {
+        "inline_keyboard": [[{
+            "text": f"✍️ Написать {receiver['name']}",
+            "url": write_url
+        }]]
+    }
     try:
         if receiver.get('avatar_file_id'):
             payload = {"chat_id": sender_id, "photo": receiver['avatar_file_id'], "caption": text, "parse_mode": "Markdown"}
@@ -72,12 +74,12 @@ async def send_liked_notification(liker, target_id, is_premium):
                 f"📝 {liker.get('bio') or 'Нет описания'}\n\n"
                 f"Открой свайп и лайкни в ответ!"
             )
-            payload = {"chat_id": target_id, "text": text, "parse_mode": "Markdown"}
+            write_url = f"https://t.me/{liker['username']}" if liker.get('username') else f"tg://user?id={liker['id']}"
+            reply_markup = {"inline_keyboard": [[{"text": f"✍️ Написать {liker['name']}", "url": write_url}]]}
             if liker.get('avatar_file_id'):
-                payload_photo = {"chat_id": target_id, "photo": liker['avatar_file_id'], "caption": text, "parse_mode": "Markdown"}
-                await client.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto", json=payload_photo)
+                await client.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto", json={"chat_id": target_id, "photo": liker['avatar_file_id'], "caption": text, "parse_mode": "Markdown", "reply_markup": reply_markup})
             else:
-                await client.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json=payload)
+                await client.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json={"chat_id": target_id, "text": text, "parse_mode": "Markdown", "reply_markup": reply_markup})
         else:
             # Бесплатно — только что лайкнули, без имени
             text = "❤️ Кто-то лайкнул твою анкету!\n\nОткрой свайп и найди своего тиммейта 🎮"
