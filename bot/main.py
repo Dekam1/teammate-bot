@@ -53,6 +53,15 @@ class Registration(StatesGroup):
 class Browse(StatesGroup):
     viewing = State()
 
+class EditProfile(StatesGroup):
+    name = State()
+    age = State()
+    bio = State()
+    avatar = State()
+    games = State()
+    game_rank = State()
+    game_roles = State()
+
 def games_keyboard(selected=None):
     selected = selected or []
     buttons = []
@@ -111,6 +120,17 @@ def profile_actions_keyboard(target_id, is_premium=False):
 
 def main_menu_keyboard(webapp_url=None):
     return None
+
+def edit_menu_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✏️ Имя", callback_data="edit:name"),
+         InlineKeyboardButton(text="🎂 Возраст", callback_data="edit:age")],
+        [InlineKeyboardButton(text="📝 О себе", callback_data="edit:bio"),
+         InlineKeyboardButton(text="📷 Фото", callback_data="edit:avatar")],
+        [InlineKeyboardButton(text="🎮 Игры", callback_data="edit:games")],
+        [InlineKeyboardButton(text="🔴 Скрыть анкету", callback_data="toggle_active"),
+         InlineKeyboardButton(text="🗑 Удалить анкету", callback_data="delete_profile")],
+    ])
 
 @dp.message(CommandStart())
 async def cmd_start(message: types.Message, state: FSMContext):
@@ -462,6 +482,131 @@ async def buy_premium(callback: types.CallbackQuery):
         "Напиши @admin для ручной активации.",
         show_alert=True
     )
+
+@dp.callback_query(F.data == "edit_profile")
+async def edit_profile_menu(callback: types.CallbackQuery):
+    await callback.message.edit_reply_markup(reply_markup=edit_menu_keyboard())
+    await callback.answer()
+
+@dp.callback_query(F.data.startswith("edit:"))
+async def edit_field(callback: types.CallbackQuery, state: FSMContext):
+    field = callback.data.split(":")[1]
+    prompts = {
+        "name": "✏️ Введи новое имя:",
+        "age": "🎂 Введи новый возраст:",
+        "bio": "📝 Напиши новое описание (или /skip чтобы убрать):",
+        "avatar": "📷 Отправь новое фото (или /skip чтобы убрать):",
+        "games": "🎮 Выбери игры:"
+    }
+    if field == "games":
+        user_games = await db.get_user_games(callback.from_user.id)
+        selected = [g["game"] for g in user_games]
+        await state.update_data(selected_games=selected)
+        await callback.message.answer(prompts[field], reply_markup=games_keyboard(selected))
+        await state.set_state(EditProfile.games)
+    elif field == "avatar":
+        await callback.message.answer(prompts[field])
+        await state.set_state(EditProfile.avatar)
+    else:
+        await callback.message.answer(prompts[field])
+        await state.set_state(getattr(EditProfile, field))
+    await callback.answer()
+
+@dp.message(EditProfile.name)
+async def edit_name(message: types.Message, state: FSMContext):
+    name = message.text.strip()
+    if len(name) < 2 or len(name) > 30:
+        await message.answer("Имя должно быть от 2 до 30 символов:")
+        return
+    await db.update_user_field(message.from_user.id, "name", name)
+    await state.clear()
+    await message.answer(f"✅ Имя изменено на {name}!")
+    await show_my_profile(message)
+
+@dp.message(EditProfile.age)
+async def edit_age(message: types.Message, state: FSMContext):
+    try:
+        age = int(message.text.strip())
+        if age < 13 or age > 60:
+            raise ValueError
+    except ValueError:
+        await message.answer("Введи корректный возраст (13–60):")
+        return
+    await db.update_user_field(message.from_user.id, "age", age)
+    await state.clear()
+    await message.answer(f"✅ Возраст изменён на {age}!")
+    await show_my_profile(message)
+
+@dp.message(EditProfile.bio)
+async def edit_bio(message: types.Message, state: FSMContext):
+    bio = None if message.text == "/skip" else message.text[:200]
+    await db.update_user_field(message.from_user.id, "bio", bio)
+    await state.clear()
+    await message.answer("✅ Описание обновлено!")
+    await show_my_profile(message)
+
+@dp.message(EditProfile.avatar, F.photo)
+async def edit_avatar_photo(message: types.Message, state: FSMContext):
+    file_id = message.photo[-1].file_id
+    await db.update_user_field(message.from_user.id, "avatar_file_id", file_id)
+    await state.clear()
+    await message.answer("✅ Фото обновлено!")
+    await show_my_profile(message)
+
+@dp.message(EditProfile.avatar)
+async def edit_avatar_skip(message: types.Message, state: FSMContext):
+    if message.text == "/skip":
+        await db.update_user_field(message.from_user.id, "avatar_file_id", None)
+        await state.clear()
+        await message.answer("✅ Фото удалено!")
+        await show_my_profile(message)
+    else:
+        await message.answer("Отправь фото или /skip:")
+
+@dp.callback_query(F.data.startswith("game_toggle:"), EditProfile.games)
+async def edit_game_toggle(callback: types.CallbackQuery, state: FSMContext):
+    game_key = callback.data.split(":")[1]
+    data = await state.get_data()
+    selected = data.get("selected_games", [])
+    if game_key in selected:
+        selected.remove(game_key)
+    else:
+        selected.append(game_key)
+    await state.update_data(selected_games=selected)
+    await callback.message.edit_reply_markup(reply_markup=games_keyboard(selected))
+
+@dp.callback_query(F.data == "games_done", EditProfile.games)
+async def edit_games_done(callback: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    selected = data.get("selected_games", [])
+    if not selected:
+        await callback.answer("Выбери хотя бы одну игру!", show_alert=True)
+        return
+    await db.delete_user_games(callback.from_user.id)
+    await state.update_data(games_to_configure=selected.copy(), game_details={})
+    await configure_next_game(callback.message, state)
+
+@dp.callback_query(F.data == "toggle_active")
+async def toggle_profile_active(callback: types.CallbackQuery):
+    await db.toggle_active(callback.from_user.id)
+    user = await db.get_user(callback.from_user.id)
+    status = "скрыта" if not user["is_active"] else "активна"
+    await callback.answer(f"Анкета {status}!", show_alert=True)
+
+@dp.callback_query(F.data == "delete_profile")
+async def delete_profile_confirm(callback: types.CallbackQuery):
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✅ Да, удалить", callback_data="delete_confirmed"),
+         InlineKeyboardButton(text="❌ Отмена", callback_data="edit_profile")]
+    ])
+    await callback.message.edit_reply_markup(reply_markup=kb)
+    await callback.answer()
+
+@dp.callback_query(F.data == "delete_confirmed")
+async def delete_profile_confirmed(callback: types.CallbackQuery):
+    await db.delete_user(callback.from_user.id)
+    await callback.message.answer("Анкета удалена. Напиши /start чтобы создать новую.")
+    await callback.answer()
 
 async def main():
     await db.connect()
