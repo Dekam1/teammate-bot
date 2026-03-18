@@ -222,6 +222,48 @@ def get_matches(user_id: int):
     conn.close()
     return matches
 
+class UpdateProfileRequest(BaseModel):
+    user_id: int
+    field: str
+    value: str
+
+class ToggleActiveRequest(BaseModel):
+    user_id: int
+
+@app.get("/api/my_profile")
+def my_profile(user_id: int):
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+    row = cur.fetchone()
+    if not row:
+        raise HTTPException(404)
+    user = dict(row)
+    cur.execute("SELECT game, rank, roles FROM user_games WHERE user_id = %s", (user_id,))
+    user["games"] = [dict(g) for g in cur.fetchall()]
+    conn.close()
+    return user
+
+@app.post("/api/update_profile")
+def update_profile(req: UpdateProfileRequest):
+    allowed = {"name", "age", "bio"}
+    if req.field not in allowed:
+        raise HTTPException(400, "Field not allowed")
+    conn = get_conn()
+    cur = conn.cursor()
+    value = int(req.value) if req.field == "age" else req.value
+    cur.execute(f"UPDATE users SET {req.field}=%s, updated_at=NOW() WHERE id=%s", (value, req.user_id))
+    conn.close()
+    return {"ok": True}
+
+@app.post("/api/toggle_active")
+def toggle_active(req: ToggleActiveRequest):
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("UPDATE users SET is_active = NOT is_active WHERE id=%s", (req.user_id,))
+    conn.close()
+    return {"ok": True}
+
 @app.get("/api/who_liked_me")
 def who_liked_me(user_id: int):
     """Для премиум — список кто лайкнул"""
