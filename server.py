@@ -163,6 +163,15 @@ async def like_profile(req: LikeRequest):
 
     return {"matched": matched}
 
+@app.get("/api/check_user")
+def check_user(user_id: int):
+    conn = get_conn()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT id, name FROM users WHERE id = %s", (user_id,))
+    row = cur.fetchone()
+    conn.close()
+    return {"registered": bool(row), "name": row["name"] if row else None}
+
 @app.get("/api/matches")
 def get_matches(user_id: int):
     conn = get_conn()
