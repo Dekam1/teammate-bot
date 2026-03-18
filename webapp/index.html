@@ -256,6 +256,24 @@
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 
+function getTelegramUserId() {
+  // Метод 1: initDataUnsafe
+  const id1 = tg?.initDataUnsafe?.user?.id;
+  if (id1) return id1;
+  
+  // Метод 2: парсим initData вручную
+  try {
+    const initData = tg?.initData;
+    if (initData) {
+      const params = new URLSearchParams(initData);
+      const user = JSON.parse(decodeURIComponent(params.get('user') || '{}'));
+      if (user.id) return user.id;
+    }
+  } catch(e) {}
+  
+  return null;
+}
+
 const GAME_INFO = {
   dota2: { name: "Dota 2", emoji: "🎮" },
   cs2: { name: "CS2", emoji: "🔫" },
@@ -281,8 +299,8 @@ const DEMO_PROFILES = [
 
 async function loadProfiles() {
   try {
-    const userId = tg?.initDataUnsafe?.user?.id;
-    console.log('Telegram user ID:', userId, 'initDataUnsafe:', tg?.initDataUnsafe);
+    const userId = getTelegramUserId();
+    console.log('Telegram user ID:', userId);
     if (!userId) {
       console.log('No user ID — showing demo profiles');
       profiles = DEMO_PROFILES;
@@ -427,7 +445,7 @@ function finishSwipe(card, profile, dir) {
 }
 
 async function sendLike(profile) {
-  const userId = tg?.initDataUnsafe?.user?.id;
+  const userId = getTelegramUserId();
   if (!userId) { showMatchDemo(profile); return; }
   try {
     const res = await fetch(`${API_URL}/api/like`, {
