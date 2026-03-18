@@ -106,17 +106,19 @@ def get_profiles(user_id: int, game: str = "all", seek: str = "any", limit: int 
 
     # Сначала те кто лайкнул текущего пользователя (приоритет)
     cur.execute(f"""
-        SELECT DISTINCT u.id, u.name, u.age, u.gender, u.bio,
-               u.avatar_file_id, u.is_premium, u.username,
-               CASE WHEN l_in.from_user_id IS NOT NULL THEN 1 ELSE 0 END as liked_me
-        FROM users u
-        JOIN user_games ug ON u.id = ug.user_id
-        LEFT JOIN likes l_in ON l_in.from_user_id = u.id AND l_in.to_user_id = %s
-        WHERE u.id != %s AND u.is_active = TRUE
-        AND u.id NOT IN (SELECT to_user_id FROM likes WHERE from_user_id = %s)
-        AND u.id NOT IN (SELECT blocked_id FROM blocked_users WHERE blocker_id = %s)
-        {game_filter} {seek_filter}
-        ORDER BY liked_me DESC, u.is_premium DESC, RANDOM()
+        SELECT * FROM (
+            SELECT DISTINCT ON (u.id) u.id, u.name, u.age, u.gender, u.bio,
+                   u.avatar_file_id, u.is_premium, u.username,
+                   CASE WHEN l_in.from_user_id IS NOT NULL THEN 1 ELSE 0 END as liked_me
+            FROM users u
+            JOIN user_games ug ON u.id = ug.user_id
+            LEFT JOIN likes l_in ON l_in.from_user_id = u.id AND l_in.to_user_id = %s
+            WHERE u.id != %s AND u.is_active = TRUE
+            AND u.id NOT IN (SELECT to_user_id FROM likes WHERE from_user_id = %s)
+            AND u.id NOT IN (SELECT blocked_id FROM blocked_users WHERE blocker_id = %s)
+            {game_filter} {seek_filter}
+        ) sub
+        ORDER BY liked_me DESC, is_premium DESC, RANDOM()
         LIMIT %s
     """, (user_id, user_id, user_id, user_id, limit))
     users = [dict(r) for r in cur.fetchall()]
