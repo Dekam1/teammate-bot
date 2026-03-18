@@ -116,9 +116,22 @@
   .filter-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
   .chip { padding: 7px 14px; border-radius: 20px; border: 1px solid #333; background: none; color: var(--text2); font-size: 13px; cursor: pointer; transition: all 0.15s; }
   .chip.active { border-color: var(--accent); background: rgba(108,99,255,0.15); color: var(--accent); }
+
+.onboard-screen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; z-index: 200; }
+.onboard-icon { font-size: 72px; margin-bottom: 24px; }
+.onboard-title { font-size: 26px; font-weight: 700; margin-bottom: 12px; }
+.onboard-sub { color: #9999bb; font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
 </style>
 </head>
 <body>
+
+<!-- NOT REGISTERED SCREEN -->
+<div id="screen-notregistered" style="display:none; position:fixed; inset:0; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; text-align:center; z-index:200;">
+  <div style="font-size:72px; margin-bottom:24px">🎮</div>
+  <div style="font-size:26px; font-weight:700; margin-bottom:12px">Добро пожаловать!</div>
+  <div style="color:#9999bb; font-size:15px; line-height:1.6; margin-bottom:32px">Чтобы искать тиммейтов — нужно создать анкету. Это займёт 2 минуты!</div>
+  <button class="btn-primary" onclick="goRegister()" style="width:100%; max-width:320px">Создать анкету</button>
+</div>
 
 <!-- BROWSE SCREEN -->
 <div class="screen active" id="screen-browse">
@@ -298,6 +311,13 @@ const DEMO_PROFILES = [
   { id: 4, name: "Катя", age: 21, gender: "female", bio: "Mobile Legends Mythic, ищу стабильный стак для рейтинга", avatar_file_id: null, is_premium: true, games: [{ game: "mobile_legends", rank: "Mythic", roles: ["Gold Lane","Roam"] }] },
 ];
 
+function goRegister() {
+  tg?.close();
+  // Открываем бота для регистрации
+  const botUsername = 'dota2ankets_bot';
+  window.open(`https://t.me/${botUsername}?start=register`, '_blank');
+}
+
 async function loadProfiles() {
   const debugEl = document.getElementById('debug-info');
   try {
@@ -305,10 +325,19 @@ async function loadProfiles() {
     if (debugEl) debugEl.textContent = 'User ID: ' + userId + ' | initData: ' + (tg?.initData ? 'YES' : 'NO');
     
     if (!userId) {
-      if (debugEl) debugEl.textContent = 'NO USER ID! initData=' + (tg?.initData||'empty') + ' unsafe=' + JSON.stringify(tg?.initDataUnsafe);
-      profiles = DEMO_PROFILES;
-      renderCard();
+      if (debugEl) debugEl.textContent = 'NO USER ID!';
+      document.getElementById('screen-notregistered').style.display = 'flex';
       return;
+    }
+
+    // Проверяем регистрацию
+    const checkRes = await fetch(`${API_URL}/api/check_user?user_id=${userId}`);
+    if (checkRes.ok) {
+      const checkData = await checkRes.json();
+      if (!checkData.registered) {
+        document.getElementById('screen-notregistered').style.display = 'flex';
+        return;
+      }
     }
     const url = `${API_URL}/api/profiles?user_id=${userId}&game=${filters.game}&seek=${filters.seek}`;
     if (debugEl) debugEl.textContent += ' | fetching...';
