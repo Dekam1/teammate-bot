@@ -130,6 +130,7 @@
     </div>
   </div>
 
+  <div id="debug-info" style="font-size:11px;color:#888;padding:4px 20px;word-break:break-all;"></div>
   <div class="card-stack" id="card-stack">
     <div class="empty-state" id="empty-state" style="display:none">
       <div class="empty-icon">🎮</div>
@@ -298,30 +299,33 @@ const DEMO_PROFILES = [
 ];
 
 async function loadProfiles() {
+  const debugEl = document.getElementById('debug-info');
   try {
     const userId = getTelegramUserId();
-    console.log('Telegram user ID:', userId);
+    if (debugEl) debugEl.textContent = 'User ID: ' + userId + ' | initData: ' + (tg?.initData ? 'YES' : 'NO');
+    
     if (!userId) {
-      console.log('No user ID — showing demo profiles');
+      if (debugEl) debugEl.textContent = 'NO USER ID! initData=' + (tg?.initData||'empty') + ' unsafe=' + JSON.stringify(tg?.initDataUnsafe);
       profiles = DEMO_PROFILES;
       renderCard();
       return;
     }
-    const res = await fetch(`${API_URL}/api/profiles?user_id=${userId}&game=${filters.game}&seek=${filters.seek}`);
-    console.log('API response status:', res.status);
+    const url = `${API_URL}/api/profiles?user_id=${userId}&game=${filters.game}&seek=${filters.seek}`;
+    if (debugEl) debugEl.textContent += ' | fetching...';
+    const res = await fetch(url);
+    if (debugEl) debugEl.textContent += ' | status:' + res.status;
     if (res.ok) {
       profiles = await res.json();
-      console.log('Loaded profiles:', profiles.length);
+      if (debugEl) debugEl.textContent += ' | profiles:' + profiles.length;
       if (profiles.length === 0) {
         document.getElementById('empty-state').style.display = 'flex';
-        document.getElementById('empty-state').querySelector('.empty-title').textContent = 'Никого нет рядом';
-        document.getElementById('empty-state').querySelector('.empty-sub').textContent = 'Пока нет других игроков. Пригласи друзей!';
       }
     } else {
       profiles = DEMO_PROFILES;
+      if (debugEl) debugEl.textContent += ' | ERROR using demo';
     }
   } catch(e) {
-    console.error('loadProfiles error:', e);
+    if (debugEl) debugEl.textContent = 'ERROR: ' + e.message;
     profiles = DEMO_PROFILES;
   }
   currentIndex = 0;
