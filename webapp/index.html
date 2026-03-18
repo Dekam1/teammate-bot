@@ -563,7 +563,13 @@ async function loadMatches() {
       </div>
       <div class="match-item-action">→</div>
     `;
-    div.onclick = () => m.username && openLink(`https://t.me/${m.username}`);
+    div.onclick = () => {
+      if (m.username) {
+        openLink(`https://t.me/${m.username}`);
+      } else if (m.id) {
+        openLink(`tg://user?id=${m.id}`);
+      }
+    };
     list.appendChild(div);
   });
 }
