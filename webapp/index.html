@@ -446,7 +446,9 @@ function editField(field) {
     showScreen('edit');
     return;
   }
-  document.querySelector('#screen-edit .btn-primary').style.display = '';
+  const saveBtn = document.querySelector('#screen-edit .btn-primary');
+  saveBtn.style.display = '';
+  saveBtn.dataset.field = field;
   showScreen('edit');
 }
 
@@ -454,27 +456,24 @@ async function saveEditField() {
   const userId = getTelegramUserId();
   const input = document.getElementById('edit-input');
   const value = input ? input.value.trim() : '';
-  
-  if (!userId) { alert('Ошибка: нет user ID'); return; }
-  if (!editingField) { alert('Ошибка: нет поля'); return; }
-  if (!value) { alert('Введи значение!'); return; }
+  const saveBtn = document.querySelector('#screen-edit .btn-primary');
+  const field = saveBtn?.dataset?.field || editingField;
+
+  if (!userId || !field || !value) return;
 
   try {
     const res = await fetch(`${API_URL}/api/update_profile`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({user_id: userId, field: editingField, value: value})
+      body: JSON.stringify({user_id: Number(userId), field: field, value: value})
     });
-    const data = await res.json();
-    if (res.ok && data.ok) {
+    if (res.ok) {
       myProfile = null;
       await loadMyProfile();
       showScreen('profile');
-    } else {
-      alert('Ошибка сохранения: ' + JSON.stringify(data));
     }
   } catch(e) {
-    alert('Ошибка: ' + e.message);
+    console.error('Save error:', e);
   }
 }
 
