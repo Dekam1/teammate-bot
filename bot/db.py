@@ -148,6 +148,21 @@ class Database:
             WHERE id=%s
         """, (days, user_id))
 
+    async def update_user_field(self, user_id: int, field: str, value):
+        allowed = {"name", "age", "bio", "avatar_file_id", "gender", "seeking"}
+        if field not in allowed:
+            return
+        cur = self._cursor()
+        cur.execute(f"UPDATE users SET {field}=%s, updated_at=NOW() WHERE id=%s", (value, user_id))
+
+    async def delete_user_games(self, user_id: int):
+        cur = self._cursor()
+        cur.execute("DELETE FROM user_games WHERE user_id=%s", (user_id,))
+
+    async def delete_user(self, user_id: int):
+        cur = self._cursor()
+        cur.execute("DELETE FROM users WHERE id=%s", (user_id,))
+
     async def toggle_active(self, user_id: int):
         cur = self._cursor()
         cur.execute(
