@@ -203,7 +203,8 @@
   </div>
   <div style="padding:20px; flex:1;">
     <div id="edit-field-container"></div>
-    <button class="btn-primary" style="margin-top:16px" onclick="saveEditField()">Сохранить</button>
+    <div id="edit-debug" style="font-size:11px;color:#888;margin-bottom:8px;word-break:break-all"></div>
+    <button class="btn-primary" style="margin-top:0px" onclick="saveEditField()">Сохранить</button>
     <button class="btn-secondary" style="margin-top:8px" onclick="showScreen('profile')">Отмена</button>
   </div>
 </div>
@@ -459,21 +460,26 @@ async function saveEditField() {
   const saveBtn = document.querySelector('#screen-edit .btn-primary');
   const field = saveBtn?.dataset?.field || editingField;
 
+  const dbg = document.getElementById('edit-debug');
+  if (dbg) dbg.textContent = `uid=${userId} field=${field} val=${value}`;
+
   if (!userId || !field || !value) return;
 
+  if (dbg) dbg.textContent += ' sending...';
   try {
     const res = await fetch(`${API_URL}/api/update_profile`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({user_id: Number(userId), field: field, value: value})
     });
+    if (dbg) dbg.textContent += ` status=${res.status}`;
     if (res.ok) {
       myProfile = null;
       await loadMyProfile();
       showScreen('profile');
     }
   } catch(e) {
-    console.error('Save error:', e);
+    if (dbg) dbg.textContent += ` err=${e.message}`;
   }
 }
 
