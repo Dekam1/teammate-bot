@@ -194,18 +194,17 @@
   </nav>
 </div>
 
-<!-- EDIT FIELD SCREEN -->
-<div class="screen" id="screen-edit">
-  <div class="header">
-    <button class="icon-btn" onclick="showScreen('profile')">←</button>
-    <div class="logo" id="edit-title">Редактировать</div>
-    <div style="width:40px"></div>
-  </div>
-  <div style="padding:20px; flex:1;">
-    <div id="edit-field-container"></div>
-    <div id="edit-debug" style="font-size:11px;color:#888;margin-bottom:8px;word-break:break-all"></div>
-    <button class="btn-primary" style="margin-top:0px" onclick="saveEditField()">Сохранить</button>
-    <button class="btn-secondary" style="margin-top:8px" onclick="showScreen('profile')">Отмена</button>
+<!-- EDIT MODAL -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;align-items:flex-end;justify-content:center;">
+  <div style="background:#1a1a24;border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-size:17px;font-weight:500;color:#fff" id="edit-modal-title">Редактировать</div>
+      <button onclick="closeEditModal()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div id="edit-field-container" style="margin-bottom:16px;"></div>
+    <div id="edit-debug" style="font-size:11px;color:#f90;margin-bottom:8px;word-break:break-all;min-height:16px;"></div>
+    <button id="edit-save-btn" onclick="saveEditField()" style="width:100%;padding:14px;background:linear-gradient(135deg,#6c63ff,#ff6b9d);border:none;border-radius:12px;color:white;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;">Сохранить</button>
+    <button onclick="closeEditModal()" style="width:100%;padding:12px;background:none;border:1px solid #333;border-radius:12px;color:#999;font-size:14px;cursor:pointer;">Отмена</button>
   </div>
 </div>
 
@@ -429,57 +428,64 @@ function renderMyProfile() {
 function editField(field) {
   editingField = field;
   const titles = {name:'Имя', age:'Возраст', bio:'О себе', avatar:'Фото'};
-  document.getElementById('edit-title').textContent = titles[field] || field;
+  document.getElementById('edit-modal-title').textContent = titles[field] || field;
   const container = document.getElementById('edit-field-container');
+  const saveBtn = document.getElementById('edit-save-btn');
+  document.getElementById('edit-debug').textContent = '';
 
   if (field === 'name') {
-    container.innerHTML = `<input type="text" id="edit-input" value="${myProfile?.name || ''}" placeholder="Твоё имя" style="width:100%">`;
+    container.innerHTML = `<input type="text" id="edit-input" value="${myProfile?.name || ''}" placeholder="Твоё имя" style="width:100%;padding:12px;background:#2a2a3e;border:1px solid #444;border-radius:10px;color:#fff;font-size:16px;box-sizing:border-box;">`;
+    saveBtn.style.display = '';
   } else if (field === 'age') {
-    container.innerHTML = `<input type="number" id="edit-input" value="${myProfile?.age || ''}" placeholder="Возраст" min="13" max="60" style="width:100%">`;
+    container.innerHTML = `<input type="number" id="edit-input" value="${myProfile?.age || ''}" placeholder="Возраст" min="13" max="60" style="width:100%;padding:12px;background:#2a2a3e;border:1px solid #444;border-radius:10px;color:#fff;font-size:16px;box-sizing:border-box;">`;
+    saveBtn.style.display = '';
   } else if (field === 'bio') {
-    container.innerHTML = `<textarea id="edit-input" placeholder="Расскажи о себе..." style="width:100%;height:120px;padding:10px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;color:var(--color-text-primary);font-size:15px;resize:none">${myProfile?.bio || ''}</textarea>`;
+    container.innerHTML = `<textarea id="edit-input" placeholder="Расскажи о себе..." style="width:100%;height:100px;padding:12px;background:#2a2a3e;border:1px solid #444;border-radius:10px;color:#fff;font-size:15px;resize:none;box-sizing:border-box;">${myProfile?.bio || ''}</textarea>`;
+    saveBtn.style.display = '';
   } else if (field === 'avatar') {
-    container.innerHTML = `<div style="text-align:center;padding:20px 0">
-      <div style="font-size:14px;color:var(--color-text-secondary);margin-bottom:16px">Смена фото доступна через бота</div>
-      <button class="btn-secondary" onclick="tg?.close()">Открыть бота</button>
-    </div>`;
-    document.querySelector('#screen-edit .btn-primary').style.display = 'none';
-    showScreen('edit');
-    return;
+    container.innerHTML = `<div style="text-align:center;padding:10px 0;color:#aaa;font-size:14px;">Смена фото — через бота</div>`;
+    saveBtn.style.display = 'none';
   }
-  const saveBtn = document.querySelector('#screen-edit .btn-primary');
-  saveBtn.style.display = '';
-  saveBtn.dataset.field = field;
-  showScreen('edit');
+
+  document.getElementById('edit-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('edit-input')?.focus(), 100);
 }
+
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+  editingField = null;
+}
+
 
 async function saveEditField() {
   const userId = getTelegramUserId();
   const input = document.getElementById('edit-input');
   const value = input ? input.value.trim() : '';
-  const saveBtn = document.querySelector('#screen-edit .btn-primary');
-  const field = saveBtn?.dataset?.field || editingField;
-
+  const field = editingField;
   const dbg = document.getElementById('edit-debug');
-  if (dbg) dbg.textContent = `uid=${userId} field=${field} val=${value}`;
 
-  if (!userId || !field || !value) return;
+  dbg.textContent = `uid=${userId} f=${field} v=${value}`;
 
-  if (dbg) dbg.textContent += ' sending...';
+  if (!userId || !field || !value) {
+    dbg.textContent += ' — missing data!';
+    return;
+  }
+
+  dbg.textContent += ' → saving...';
   try {
     const res = await fetch(`${API_URL}/api/update_profile`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({user_id: Number(userId), field: field, value: value})
     });
-    if (dbg) dbg.textContent += ` status=${res.status}`;
+    dbg.textContent += ` [${res.status}]`;
     if (res.ok) {
+      closeEditModal();
       myProfile = null;
       await loadMyProfile();
-      showScreen('profile');
     }
   } catch(e) {
-    if (dbg) dbg.textContent += ` err=${e.message}`;
+    dbg.textContent += ` ERR: ${e.message}`;
   }
 }
 
