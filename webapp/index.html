@@ -1250,7 +1250,8 @@
   <!-- PROFILE SCREEN -->
   <div class="screen" id="screen-profile">
     <div class="profile-scroll">
-      <div class="profile-photo-section" onclick="changePhoto()" id="profile-photo-section">
+      <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="uploadPhoto(this)">
+      <div class="profile-photo-section" onclick="document.getElementById('photo-input').click()" id="profile-photo-section">
         <div class="profile-photo-bg"></div>
         <div class="profile-avatar-placeholder" id="profile-avatar-placeholder">👤</div>
         <div class="profile-photo-hint">📷 Нажми чтобы сменить фото</div>
@@ -1929,8 +1930,54 @@ async function toggleActive() {
 }
 
 // ===== PHOTO =====
-function changePhoto() {
-  tg?.showAlert('Чтобы сменить фото, воспользуйся командой в боте:\n\n👤 Моя анкета → ✏️ Редактировать → 📷 Фото');
+async function uploadPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Проверка размера (макс 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('❌ Фото слишком большое (макс 5MB)');
+    return;
+  }
+
+  showToast('⏳ Загружаю фото...');
+
+  try {
+    const formData = new FormData();
+    formData.append('photo', file);
+    formData.append('user_id', userId);
+
+    const res = await fetch(`${API}/api/upload_photo`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!res.ok) throw new Error('Upload failed');
+    const data = await res.json();
+
+    if (data.ok) {
+      // Обновляем фото на экране сразу
+      const photoSection = document.getElementById('profile-photo-section');
+      const placeholder = document.getElementById('profile-avatar-placeholder');
+      let img = photoSection.querySelector('.profile-avatar-img');
+      if (!img) {
+        img = document.createElement('img');
+        img.className = 'profile-avatar-img';
+        photoSection.insertBefore(img, placeholder);
+      }
+      img.src = URL.createObjectURL(file);
+      placeholder.style.display = 'none';
+      showToast('✅ Фото обновлено!');
+    } else {
+      throw new Error(data.error || 'Unknown error');
+    }
+  } catch(e) {
+    console.error(e);
+    showToast('❌ Ошибка загрузки фото');
+  }
+
+  // Сбрасываем input чтобы можно было загрузить то же фото снова
+  input.value = '';
 }
 
 // ===== TOAST =====
