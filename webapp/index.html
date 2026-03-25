@@ -2,786 +2,1841 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>TeammateFind</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  :root {
-    --bg: #0f0f13;
-    --card: #1a1a24;
-    --accent: #6c63ff;
-    --accent2: #ff6b9d;
-    --text: #ffffff;
-    --text2: #9999bb;
-    --green: #4ade80;
-    --radius: 20px;
-  }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; min-height: 100vh; overflow-x: hidden; }
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;500;600;700&display=swap');
 
-  .screen { display: none; flex-direction: column; min-height: 100vh; }
-  .screen.active { display: flex; }
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #0f0f1a;
+    --bg3: #13131f;
+    --card: #111120;
+    --border: #1e1e3a;
+    --cyan: #00f5ff;
+    --pink: #ff006e;
+    --purple: #7b2fff;
+    --yellow: #ffd600;
+    --green: #00ff88;
+    --text: #e0e0ff;
+    --text2: #8888aa;
+    --glow-cyan: 0 0 20px rgba(0,245,255,0.4);
+    --glow-pink: 0 0 20px rgba(255,0,110,0.4);
+    --glow-purple: 0 0 20px rgba(123,47,255,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Exo 2', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Анимированный фон */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(ellipse at 20% 20%, rgba(123,47,255,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(0,245,255,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(255,0,110,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Сетка на фоне */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app {
+    position: relative;
+    z-index: 1;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+  }
 
   /* HEADER */
-  .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; }
-  .logo { font-size: 20px; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .header-actions { display: flex; gap: 10px; }
-  .icon-btn { width: 40px; height: 40px; border-radius: 12px; background: var(--card); border: none; color: var(--text); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .header {
+    padding: 12px 16px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(0,245,255,0.1);
+    background: rgba(10,10,15,0.8);
+    backdrop-filter: blur(10px);
+    flex-shrink: 0;
+  }
 
-  /* CARDS */
-  .card-stack { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 20px; position: relative; }
-  .profile-card { width: 100%; max-width: 380px; border-radius: var(--radius); overflow: hidden; background: var(--card); position: absolute; transition: transform 0.3s ease, opacity 0.3s ease; cursor: grab; user-select: none; }
-  .profile-card:active { cursor: grabbing; }
-  .profile-card.swiping-right { transform: translateX(120%) rotate(15deg); opacity: 0; }
-  .profile-card.swiping-left { transform: translateX(-120%) rotate(-15deg); opacity: 0; }
-  .card-img { width: 100%; height: 320px; object-fit: cover; background: linear-gradient(135deg, #1e1e2e, #2a2a3e); display: flex; align-items: center; justify-content: center; font-size: 80px; }
-  .card-img img { width: 100%; height: 100%; object-fit: cover; }
-  .card-body { padding: 16px 20px 20px; }
-  .card-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-  .card-age { color: var(--text2); font-size: 14px; margin-bottom: 12px; }
-  .card-bio { color: var(--text2); font-size: 14px; line-height: 1.5; margin-bottom: 14px; }
+  .header-logo {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+  }
 
-  /* GAMES TAGS */
-  .games-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-  .game-tag { padding: 6px 12px; border-radius: 30px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
-  .game-tag.dota2 { background: #1a1a3e; color: #7c7cff; border: 1px solid #3a3a6e; }
-  .game-tag.cs2 { background: #1a2e1a; color: #4ade80; border: 1px solid #2a4e2a; }
-  .game-tag.valorant { background: #2e1a1a; color: #ff4654; border: 1px solid #4e2a2a; }
-  .game-tag.mobile_legends { background: #2e1a2e; color: #c084fc; border: 1px solid #4e2a4e; }
-  .game-tag.pubg { background: #2e2a1a; color: #fbbf24; border: 1px solid #4e4a2a; }
-  .game-tag.lol { background: #1a2a2e; color: #22d3ee; border: 1px solid #2a4a4e; }
+  .header-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border: 1px solid var(--cyan);
+    border-radius: 20px;
+    color: var(--cyan);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    box-shadow: var(--glow-cyan);
+  }
 
-  .roles-text { font-size: 12px; color: var(--text2); margin-top: 4px; }
-
-  /* PREMIUM BADGE */
-  .premium-badge { display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
-
-  /* ACTIONS */
-  .actions { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 16px 20px 24px; }
-  .action-btn { width: 64px; height: 64px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s, opacity 0.15s; }
-  .action-btn:active { transform: scale(0.9); }
-  .btn-skip { background: #1a1a24; border: 2px solid #333; color: #999; }
-  .btn-super { background: linear-gradient(135deg, #3b82f6, #6366f1); width: 52px; height: 52px; }
-  .btn-like { background: linear-gradient(135deg, #ec4899, #f43f5e); }
-  .btn-boost { background: linear-gradient(135deg, #f59e0b, #ef4444); width: 52px; height: 52px; }
-
-  /* LIKE/NOPE INDICATORS */
-  .indicator { position: absolute; top: 30px; padding: 8px 16px; border-radius: 8px; font-size: 28px; font-weight: 900; opacity: 0; transform: rotate(-15deg); pointer-events: none; z-index: 10; }
-  .indicator.like { left: 20px; color: #4ade80; border: 3px solid #4ade80; transform: rotate(-15deg); }
-  .indicator.nope { right: 20px; color: #f43f5e; border: 3px solid #f43f5e; transform: rotate(15deg); }
-  .indicator.visible { opacity: 1; }
-
-  /* MATCH SCREEN */
-  .match-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; padding: 40px 20px; text-align: center; }
-  .match-screen.show { display: flex; }
-  .match-title { font-size: 36px; font-weight: 900; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
-  .match-sub { color: var(--text2); font-size: 16px; margin-bottom: 32px; }
-  .match-avatars { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
-  .match-avatar { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 4px solid var(--accent); background: var(--card); display: flex; align-items: center; justify-content: center; font-size: 40px; }
-  .match-heart { font-size: 32px; }
-  .match-name { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
-  .match-game { color: var(--text2); font-size: 14px; margin-bottom: 24px; }
-  .btn-primary { width: 100%; padding: 16px; border-radius: 16px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; color: white; font-size: 16px; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
-  .btn-secondary { width: 100%; padding: 14px; border-radius: 16px; background: var(--card); border: 1px solid #333; color: var(--text2); font-size: 15px; cursor: pointer; }
-
-  /* EMPTY STATE */
-  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
-  .empty-icon { font-size: 64px; margin-bottom: 20px; }
-  .empty-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
-  .empty-sub { color: var(--text2); font-size: 15px; line-height: 1.5; }
-
-  /* MATCHES LIST */
-  .matches-list { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
-  .match-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid #1a1a2e; }
-  .match-item-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--card); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
-  .match-item-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .match-item-info { flex: 1; }
-  .match-item-name { font-weight: 600; margin-bottom: 3px; }
-  .match-item-games { color: var(--text2); font-size: 13px; }
-  .match-item-action { color: var(--accent); font-size: 20px; }
+  /* SCREENS */
+  .screen {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+    flex-direction: column;
+  }
+  .screen.active { display: flex; }
 
   /* BOTTOM NAV */
-  .bottom-nav { display: flex; background: var(--card); border-top: 1px solid #1a1a2e; padding: 8px 0 max(8px, env(safe-area-inset-bottom)); }
-  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px; cursor: pointer; color: var(--text2); font-size: 11px; border: none; background: none; transition: color 0.2s; }
-  .nav-item.active { color: var(--accent); }
-  .nav-icon { font-size: 22px; }
+  .bottom-nav {
+    display: flex;
+    border-top: 1px solid rgba(0,245,255,0.1);
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(20px);
+    flex-shrink: 0;
+  }
 
-  /* FILTERS PANEL */
-  .filters-panel { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-radius: 24px 24px 0 0; padding: 20px 20px 40px; transform: translateY(100%); transition: transform 0.3s ease; z-index: 50; }
-  .filters-panel.open { transform: translateY(0); }
-  .filter-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; z-index: 49; }
-  .filter-overlay.show { display: block; }
-  .filters-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
-  .filter-label { font-size: 13px; color: var(--text2); margin-bottom: 8px; }
-  .filter-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-  .chip { padding: 7px 14px; border-radius: 20px; border: 1px solid #333; background: none; color: var(--text2); font-size: 13px; cursor: pointer; transition: all 0.15s; }
-  .chip.active { border-color: var(--accent); background: rgba(108,99,255,0.15); color: var(--accent); }
+  .nav-btn {
+    flex: 1;
+    padding: 10px 4px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: none;
+    color: var(--text2);
+    position: relative;
+  }
 
-.onboard-screen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; z-index: 200; }
-.onboard-icon { font-size: 72px; margin-bottom: 24px; }
-.onboard-title { font-size: 26px; font-weight: 700; margin-bottom: 12px; }
-.onboard-sub { color: #9999bb; font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
+  .nav-btn.active { color: var(--cyan); }
+
+  .nav-btn.active::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20%; right: 20%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    box-shadow: var(--glow-cyan);
+  }
+
+  .nav-icon { font-size: 20px; }
+  .nav-label { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; font-family: 'Rajdhani', sans-serif; font-weight: 600; }
+
+  /* ==================== SWIPE SCREEN ==================== */
+  #screen-swipe {
+    position: relative;
+  }
+
+  .swipe-header {
+    padding: 12px 16px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .swipe-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    color: var(--text2);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .filter-btn {
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid var(--purple);
+    border-radius: 20px;
+    color: var(--purple);
+    cursor: pointer;
+    background: rgba(123,47,255,0.1);
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+  .filter-btn:active { background: rgba(123,47,255,0.3); }
+
+  /* Карточки */
+  .cards-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    padding: 0 12px;
+  }
+
+  .card {
+    position: absolute;
+    top: 0; left: 12px; right: 12px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--card);
+    border: 1px solid var(--border);
+    cursor: grab;
+    user-select: none;
+    transition: box-shadow 0.3s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card:active { cursor: grabbing; }
+
+  .card.like-glow { box-shadow: 0 0 40px rgba(0,255,136,0.5), inset 0 0 40px rgba(0,255,136,0.05); border-color: var(--green); }
+  .card.nope-glow { box-shadow: 0 0 40px rgba(255,0,110,0.5), inset 0 0 40px rgba(255,0,110,0.05); border-color: var(--pink); }
+
+  .card-photo {
+    width: 100%;
+    height: 52%;
+    object-fit: cover;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .card-photo-placeholder {
+    width: 100%;
+    height: 52%;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .card-photo-placeholder::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(circle at 30% 30%, rgba(123,47,255,0.2), transparent 50%),
+      radial-gradient(circle at 70% 70%, rgba(0,245,255,0.1), transparent 50%);
+  }
+
+  .avatar-icon {
+    font-size: 72px;
+    opacity: 0.4;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card-photo-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 80px;
+    background: linear-gradient(transparent, rgba(10,10,15,0.9));
+  }
+
+  /* Лейблы лайк/нет */
+  .like-label, .nope-label {
+    position: absolute;
+    top: 20px;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    opacity: 0;
+    transition: opacity 0.1s;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .like-label {
+    left: 16px;
+    color: var(--green);
+    border: 3px solid var(--green);
+    box-shadow: 0 0 20px rgba(0,255,136,0.5);
+    transform: rotate(-15deg);
+  }
+
+  .nope-label {
+    right: 16px;
+    color: var(--pink);
+    border: 3px solid var(--pink);
+    box-shadow: 0 0 20px rgba(255,0,110,0.5);
+    transform: rotate(15deg);
+  }
+
+  .card-info {
+    flex: 1;
+    padding: 12px 14px;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .card-info::-webkit-scrollbar { display: none; }
+
+  .card-name-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .card-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+  }
+
+  .card-age {
+    font-size: 16px;
+    color: var(--cyan);
+    font-weight: 600;
+  }
+
+  .card-gender {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: auto;
+  }
+  .card-gender.male { background: rgba(0,245,255,0.1); color: var(--cyan); border: 1px solid rgba(0,245,255,0.3); }
+  .card-gender.female { background: rgba(255,0,110,0.1); color: var(--pink); border: 1px solid rgba(255,0,110,0.3); }
+
+  .card-bio {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 10px;
+    line-height: 1.4;
+    font-style: italic;
+  }
+
+  .card-games {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .game-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .game-tag::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+  .game-tag.dota2::before { background: linear-gradient(180deg, #ff6b35, #f7931e); }
+  .game-tag.cs2::before { background: linear-gradient(180deg, #f5a623, #f0db4f); }
+  .game-tag.valorant::before { background: linear-gradient(180deg, #ff4655, #ff8a80); }
+  .game-tag.lol::before { background: linear-gradient(180deg, #0bc4e3, #1db3cd); }
+  .game-tag.pubg::before { background: linear-gradient(180deg, #f9a825, #fdd835); }
+  .game-tag.mobile_legends::before { background: linear-gradient(180deg, #e040fb, #ce93d8); }
+
+  .game-emoji { font-size: 16px; }
+
+  .game-info { flex: 1; }
+
+  .game-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .game-details {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 1px;
+  }
+
+  .game-rank {
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    background: rgba(123,47,255,0.15);
+    color: var(--purple);
+    border: 1px solid rgba(123,47,255,0.3);
+    white-space: nowrap;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+  }
+
+  /* Кнопки свайпа */
+  .swipe-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 16px 12px;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .action-btn::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn-nope {
+    background: rgba(255,0,110,0.1);
+    border: 2px solid rgba(255,0,110,0.4);
+    color: var(--pink);
+  }
+  .btn-nope:active { background: rgba(255,0,110,0.25); transform: scale(0.92); box-shadow: var(--glow-pink); }
+
+  .btn-like {
+    width: 68px;
+    height: 68px;
+    font-size: 28px;
+    background: linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,245,255,0.15));
+    border: 2px solid rgba(0,255,136,0.5);
+    color: var(--green);
+  }
+  .btn-like:active { transform: scale(0.92); box-shadow: 0 0 30px rgba(0,255,136,0.5); }
+
+  .btn-super {
+    background: rgba(255,214,0,0.1);
+    border: 2px solid rgba(255,214,0,0.4);
+    color: var(--yellow);
+  }
+  .btn-super:active { background: rgba(255,214,0,0.25); transform: scale(0.92); }
+
+  /* Пустой экран */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .empty-icon { font-size: 64px; opacity: 0.4; }
+
+  .empty-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 1px;
+  }
+
+  .empty-text { font-size: 14px; color: var(--text2); line-height: 1.5; }
+
+  /* Фильтры */
+  .filters-panel {
+    display: none;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10,10,15,0.97);
+    z-index: 100;
+    padding: 20px 16px;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .filters-panel.open { display: flex; }
+
+  .filters-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--cyan);
+    text-shadow: var(--glow-cyan);
+  }
+
+  .filter-group label {
+    font-size: 11px;
+    color: var(--text2);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 8px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+  }
+
+  .filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    transition: all 0.2s;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .chip.active {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    background: rgba(0,245,255,0.1);
+    box-shadow: var(--glow-cyan);
+  }
+
+  /* ==================== MATCHES SCREEN ==================== */
+  #screen-matches {
+    overflow: hidden;
+  }
+
+  .matches-header {
+    padding: 16px;
+    flex-shrink: 0;
+  }
+
+  .matches-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, var(--pink), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .matches-count {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  .matches-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 12px 12px;
+    scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .matches-list::-webkit-scrollbar { display: none; }
+
+  .match-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: stretch;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .match-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--pink), var(--purple));
+  }
+
+  .match-avatar {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .match-avatar-placeholder {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    flex-shrink: 0;
+  }
+
+  .match-info {
+    flex: 1;
+    padding: 10px 12px;
+    min-width: 0;
+  }
+
+  .match-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+
+  .match-age { color: var(--cyan); }
+
+  .match-games {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .match-write-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    text-decoration: none;
+    border-left: 1px solid var(--border);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .match-write-btn:active { background: rgba(0,245,255,0.1); }
+
+  .match-write-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: var(--glow-cyan);
+  }
+
+  .match-no-contact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    flex-shrink: 0;
+  }
+
+  .match-no-contact-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(136,136,170,0.1);
+    border: 1px solid rgba(136,136,170,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  /* ==================== PROFILE SCREEN ==================== */
+  #screen-profile {
+    overflow: hidden;
+  }
+
+  .profile-scroll {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .profile-scroll::-webkit-scrollbar { display: none; }
+
+  .profile-photo-section {
+    position: relative;
+    height: 220px;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  .profile-photo-section::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 80px;
+    background: linear-gradient(transparent, var(--bg));
+  }
+
+  .profile-photo-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(123,47,255,0.3), transparent 50%),
+      radial-gradient(circle at 70% 70%, rgba(0,245,255,0.2), transparent 50%);
+  }
+
+  .profile-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    inset: 0;
+  }
+
+  .profile-avatar-placeholder {
+    font-size: 80px;
+    opacity: 0.3;
+    position: relative;
+    z-index: 1;
+  }
+
+  .profile-photo-hint {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    font-size: 12px;
+    color: var(--text2);
+    background: rgba(10,10,15,0.8);
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .profile-content {
+    padding: 12px 16px 20px;
+  }
+
+  .profile-field {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .profile-field:active { background: rgba(0,245,255,0.03); border-radius: 8px; padding-left: 8px; }
+
+  .profile-field-label {
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    min-width: 70px;
+  }
+
+  .profile-field-value {
+    flex: 1;
+    font-size: 15px;
+    color: var(--text);
+    margin-left: 12px;
+  }
+
+  .profile-field-arrow {
+    color: var(--text2);
+    font-size: 12px;
+    margin-left: 8px;
+  }
+
+  .profile-section-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin: 16px 0 10px;
+  }
+
+  .profile-games-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .toggle-label {
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .toggle {
+    width: 44px;
+    height: 24px;
+    background: var(--border);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+  }
+  .toggle.on { background: linear-gradient(90deg, var(--cyan), var(--purple)); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: all 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .toggle.on::after { left: 23px; }
+
+  /* ==================== MODAL ==================== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    backdrop-filter: blur(4px);
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 480px;
+    padding: 20px 16px 32px;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+
+  .modal-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--cyan);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  .modal-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: 'Exo 2', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 12px;
+  }
+  .modal-input:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 2px rgba(0,245,255,0.1);
+  }
+
+  .modal-save {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 8px;
+  }
+  .modal-save:active { opacity: 0.85; transform: scale(0.98); }
+
+  .modal-cancel {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text2);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .modal-cancel:active { background: rgba(255,255,255,0.05); }
+
+  /* ==================== MATCH MODAL ==================== */
+  .match-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+  }
+  .match-modal-overlay.open { display: flex; }
+
+  .match-modal {
+    background: var(--bg3);
+    border: 1px solid rgba(0,255,136,0.3);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    max-width: 320px;
+    width: 90%;
+    box-shadow: 0 0 60px rgba(0,255,136,0.2);
+    animation: matchPop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .match-modal::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(0,255,136,0.1), transparent 60%);
+    pointer-events: none;
+  }
+
+  @keyframes matchPop {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .match-modal-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, var(--green), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+  }
+
+  .match-modal-sub {
+    font-size: 14px;
+    color: var(--text2);
+    margin-bottom: 24px;
+  }
+
+  .match-modal-avatars {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 24px;
+    position: relative;
+  }
+
+  .match-avatar-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid var(--green);
+    box-shadow: 0 0 20px rgba(0,255,136,0.4);
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+  }
+  .match-avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+  .match-avatar-circle:first-child { margin-right: -16px; z-index: 1; }
+  .match-avatar-circle:last-child { margin-left: -16px; border-color: var(--cyan); box-shadow: 0 0 20px rgba(0,245,255,0.4); }
+
+  .match-heart {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    font-size: 24px;
+    background: var(--bg3);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(0,255,136,0.3);
+  }
+
+  .match-modal-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 20px;
+  }
+
+  .match-modal-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--green), var(--cyan));
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    text-decoration: none;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+  }
+  .match-modal-btn:active { opacity: 0.85; transform: scale(0.98); }
+
+  .match-modal-skip {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text2);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  /* NOT REGISTERED */
+  .not-registered {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .not-reg-icon { font-size: 64px; }
+
+  .not-reg-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .not-reg-text { font-size: 14px; color: var(--text2); line-height: 1.5; }
+
+  .not-reg-btn {
+    padding: 14px 32px;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    border: none;
+    border-radius: 12px;
+    color: #000;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: var(--glow-purple);
+    transition: all 0.2s;
+  }
+  .not-reg-btn:active { transform: scale(0.96); }
+
+  /* LOADING */
+  .loading {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--cyan);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    color: var(--text2);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--bg3);
+    border: 1px solid var(--cyan);
+    border-radius: 20px;
+    padding: 8px 20px;
+    font-size: 13px;
+    color: var(--cyan);
+    z-index: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    box-shadow: var(--glow-cyan);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
 </style>
 </head>
 <body>
 
-<!-- NOT REGISTERED SCREEN -->
-<div id="screen-notregistered" style="display:none; position:fixed; inset:0; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; text-align:center; z-index:200;">
-  <div style="font-size:72px; margin-bottom:24px">🎮</div>
-  <div style="font-size:26px; font-weight:700; margin-bottom:12px">Добро пожаловать!</div>
-  <div style="color:#9999bb; font-size:15px; line-height:1.6; margin-bottom:32px">Чтобы искать тиммейтов — нужно создать анкету. Это займёт 2 минуты!</div>
-  <button class="btn-primary" onclick="goRegister()" style="width:100%; max-width:320px">Создать анкету</button>
-</div>
-
-<!-- BROWSE SCREEN -->
-<div class="screen active" id="screen-browse">
+<div id="app">
   <div class="header">
-    <div class="logo">TeammateFind</div>
-    <div class="header-actions">
-      <button class="icon-btn" onclick="openFilters()">⚙️</button>
-      <button class="icon-btn" onclick="showScreen('matches')">💬</button>
+    <div class="header-logo">⚡ TeammateFind</div>
+    <div class="header-badge" id="header-badge">FREE</div>
+  </div>
+
+  <!-- SWIPE SCREEN -->
+  <div class="screen active" id="screen-swipe">
+    <div class="swipe-header">
+      <div class="swipe-title">🎮 Найти тиммейта</div>
+      <div class="filter-btn" onclick="toggleFilters()">⚙ Фильтры</div>
+    </div>
+
+    <div class="cards-container" id="cards-container">
+      <div class="loading" id="loading-state">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Загрузка...</div>
+      </div>
+    </div>
+
+    <div class="swipe-actions" id="swipe-actions" style="display:none">
+      <button class="action-btn btn-nope" onclick="handleNope()">✕</button>
+      <button class="action-btn btn-like" onclick="handleLike()">♥</button>
+      <button class="action-btn btn-super" onclick="handleNope()">★</button>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="filters-panel" id="filters-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="filters-title">⚙ Фильтры</div>
+        <div onclick="toggleFilters()" style="color:var(--text2);font-size:20px;cursor:pointer">✕</div>
+      </div>
+      <div class="filter-group">
+        <label>Игра</label>
+        <div class="filter-chips" id="game-filter-chips">
+          <div class="chip active" data-val="all" onclick="selectChip(this,'game')">Все</div>
+          <div class="chip" data-val="dota2" onclick="selectChip(this,'game')">🎮 Dota 2</div>
+          <div class="chip" data-val="cs2" onclick="selectChip(this,'game')">🔫 CS2</div>
+          <div class="chip" data-val="valorant" onclick="selectChip(this,'game')">⚡ Valorant</div>
+          <div class="chip" data-val="lol" onclick="selectChip(this,'game')">⚔️ LoL</div>
+          <div class="chip" data-val="pubg" onclick="selectChip(this,'game')">🪖 PUBG</div>
+          <div class="chip" data-val="mobile_legends" onclick="selectChip(this,'game')">📱 ML</div>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Ищу</label>
+        <div class="filter-chips" id="seek-filter-chips">
+          <div class="chip active" data-val="any" onclick="selectChip(this,'seek')">Всех</div>
+          <div class="chip" data-val="male" onclick="selectChip(this,'seek')">👦 Парней</div>
+          <div class="chip" data-val="female" onclick="selectChip(this,'seek')">👧 Девушек</div>
+        </div>
+      </div>
+      <button class="modal-save" onclick="applyFilters()">Применить фильтры</button>
     </div>
   </div>
 
-  <div id="debug-info" style="font-size:11px;color:#888;padding:4px 20px;word-break:break-all;"></div>
-  <div class="card-stack" id="card-stack">
-    <div class="empty-state" id="empty-state" style="display:none">
-      <div class="empty-icon">🎮</div>
-      <div class="empty-title">Все просмотрены!</div>
-      <div class="empty-sub">Возвращайся позже — появятся новые игроки</div>
+  <!-- MATCHES SCREEN -->
+  <div class="screen" id="screen-matches">
+    <div class="matches-header">
+      <div class="matches-title">❤ Мои матчи</div>
+      <div class="matches-count" id="matches-count">Загрузка...</div>
     </div>
-    <!-- Cards injected here -->
+    <div class="matches-list" id="matches-list"></div>
   </div>
 
-  <div class="actions">
-    <button class="action-btn btn-skip" onclick="swipe('left')">✕</button>
-    <button class="action-btn btn-super" onclick="superLike()">⭐</button>
-    <button class="action-btn btn-like" onclick="swipe('right')">♥</button>
-    <button class="action-btn btn-boost" onclick="boostProfile()">🚀</button>
+  <!-- PROFILE SCREEN -->
+  <div class="screen" id="screen-profile">
+    <div class="profile-scroll">
+      <div class="profile-photo-section" onclick="changePhoto()" id="profile-photo-section">
+        <div class="profile-photo-bg"></div>
+        <div class="profile-avatar-placeholder" id="profile-avatar-placeholder">👤</div>
+        <div class="profile-photo-hint">📷 Нажми чтобы сменить фото</div>
+      </div>
+      <div class="profile-content">
+        <div class="profile-field" onclick="openEdit('name','Имя',document.getElementById('pf-name').textContent)">
+          <div class="profile-field-label">Имя</div>
+          <div class="profile-field-value" id="pf-name">—</div>
+          <div class="profile-field-arrow">›</div>
+        </div>
+        <div class="profile-field" onclick="openEdit('age','Возраст',document.getElementById('pf-age').textContent)">
+          <div class="profile-field-label">Возраст</div>
+          <div class="profile-field-value" id="pf-age">—</div>
+          <div class="profile-field-arrow">›</div>
+        </div>
+        <div class="profile-field" onclick="openEdit('bio','О себе',document.getElementById('pf-bio').textContent)">
+          <div class="profile-field-label">О себе</div>
+          <div class="profile-field-value" id="pf-bio" style="color:var(--text2);font-style:italic">—</div>
+          <div class="profile-field-arrow">›</div>
+        </div>
+
+        <div class="profile-section-title">🎮 Игры</div>
+        <div class="profile-games-list" id="profile-games-list"></div>
+
+        <div class="toggle-row">
+          <div class="toggle-label">Анкета активна</div>
+          <button class="toggle on" id="active-toggle" onclick="toggleActive()"></button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <nav class="bottom-nav">
-    <button class="nav-item active" onclick="showScreen('browse')">
-      <span class="nav-icon">🎮</span>Найти
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="showScreen('swipe',this)">
+      <div class="nav-icon">🎮</div>
+      <div class="nav-label">Свайп</div>
     </button>
-    <button class="nav-item" onclick="showScreen('matches')">
-      <span class="nav-icon">💬</span>Матчи
+    <button class="nav-btn" onclick="showScreen('matches',this)">
+      <div class="nav-icon">❤️</div>
+      <div class="nav-label">Матчи</div>
     </button>
-    <button class="nav-item" onclick="showScreen('profile')">
-      <span class="nav-icon">👤</span>Анкета
+    <button class="nav-btn" onclick="showScreen('profile',this)">
+      <div class="nav-icon">👤</div>
+      <div class="nav-label">Анкета</div>
     </button>
-    <button class="nav-item" onclick="showScreen('premium')">
-      <span class="nav-icon">💎</span>Премиум
-    </button>
-  </nav>
-</div>
-
-<!-- PROFILE SCREEN -->
-<div class="screen" id="screen-profile">
-  <div class="header">
-    <button class="icon-btn" onclick="showScreen('browse')">←</button>
-    <div class="logo">Моя анкета</div>
-    <div style="width:40px"></div>
   </div>
-  <div style="flex:1; overflow-y:auto; padding:0 20px 20px;" id="profile-content">
-    <div style="text-align:center; color:var(--color-text-secondary); padding:40px 0">Загрузка...</div>
-  </div>
-  <nav class="bottom-nav">
-    <button class="nav-item" onclick="showScreen('browse')"><span class="nav-icon">🎮</span>Найти</button>
-    <button class="nav-item" onclick="showScreen('matches')"><span class="nav-icon">💬</span>Матчи</button>
-    <button class="nav-item active" onclick="showScreen('profile')"><span class="nav-icon">👤</span>Анкета</button>
-    <button class="nav-item" onclick="showScreen('premium')"><span class="nav-icon">💎</span>Премиум</button>
-  </nav>
 </div>
 
 <!-- EDIT MODAL -->
-<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:300;align-items:flex-end;justify-content:center;">
-  <div style="background:#1a1a24;border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <div style="font-size:17px;font-weight:500;color:#fff" id="edit-modal-title">Редактировать</div>
-      <button onclick="closeEditModal()" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;">✕</button>
-    </div>
-    <div id="edit-field-container" style="margin-bottom:16px;"></div>
-    <div id="edit-debug" style="font-size:11px;color:#f90;margin-bottom:8px;word-break:break-all;min-height:16px;"></div>
-    <button id="edit-save-btn" onclick="saveEditField()" style="width:100%;padding:14px;background:linear-gradient(135deg,#6c63ff,#ff6b9d);border:none;border-radius:12px;color:white;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;">Сохранить</button>
-    <button onclick="closeEditModal()" style="width:100%;padding:12px;background:none;border:1px solid #333;border-radius:12px;color:#999;font-size:14px;cursor:pointer;">Отмена</button>
-  </div>
-</div>
-
-<!-- MATCHES SCREEN -->
-<div class="screen" id="screen-matches">
-  <div class="header">
-    <button class="icon-btn" onclick="showScreen('browse')">←</button>
-    <div class="logo">Мои матчи</div>
-    <div style="width:40px"></div>
-  </div>
-  <div class="matches-list" id="matches-list"></div>
-  <nav class="bottom-nav">
-    <button class="nav-item" onclick="showScreen('browse')"><span class="nav-icon">🎮</span>Найти</button>
-    <button class="nav-item active" onclick="showScreen('matches')"><span class="nav-icon">💬</span>Матчи</button>
-    <button class="nav-item" onclick="showScreen('profile')"><span class="nav-icon">👤</span>Анкета</button>
-    <button class="nav-item" onclick="showScreen('premium')"><span class="nav-icon">💎</span>Премиум</button>
-  </nav>
-</div>
-
-<!-- PREMIUM SCREEN -->
-<div class="screen" id="screen-premium">
-  <div class="header">
-    <button class="icon-btn" onclick="showScreen('browse')">←</button>
-    <div class="logo">💎 Премиум</div>
-    <div style="width:40px"></div>
-  </div>
-  <div style="padding:20px; flex:1">
-    <div style="background: linear-gradient(135deg, #1a1a3e, #2a1a3e); border-radius:20px; padding:24px; margin-bottom:20px; text-align:center">
-      <div style="font-size:48px; margin-bottom:12px">💎</div>
-      <div style="font-size:22px; font-weight:700; margin-bottom:6px">TeammateFind Premium</div>
-      <div style="color:#9999bb; font-size:14px">Больше возможностей для поиска</div>
-    </div>
-    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px">
-      <div style="background:var(--card); border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px">
-        <span style="font-size:24px">❤️</span>
-        <div><div style="font-weight:600; margin-bottom:2px">Безлимитные лайки</div><div style="color:var(--text2); font-size:13px">Бесплатно: 10 лайков/день</div></div>
-      </div>
-      <div style="background:var(--card); border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px">
-        <span style="font-size:24px">👁️</span>
-        <div><div style="font-weight:600; margin-bottom:2px">Кто тебя лайкнул</div><div style="color:var(--text2); font-size:13px">Видишь всех, кто лайкнул анкету</div></div>
-      </div>
-      <div style="background:var(--card); border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px">
-        <span style="font-size:24px">🚀</span>
-        <div><div style="font-weight:600; margin-bottom:2px">Буст анкеты</div><div style="color:var(--text2); font-size:13px">Показывайся первым в поиске</div></div>
-      </div>
-      <div style="background:var(--card); border-radius:14px; padding:16px; display:flex; align-items:center; gap:14px">
-        <span style="font-size:24px">🎯</span>
-        <div><div style="font-weight:600; margin-bottom:2px">Фильтр по рангу</div><div style="color:var(--text2); font-size:13px">Ищи игроков своего уровня</div></div>
-      </div>
-    </div>
-    <button class="btn-primary" onclick="buyPremium()">Оформить за 99₽/месяц</button>
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="edit-modal-title">Редактировать</div>
+    <input class="modal-input" id="edit-modal-input" type="text" placeholder="">
+    <button class="modal-save" onclick="saveEdit()">💾 Сохранить</button>
+    <button class="modal-cancel" onclick="closeEdit()">Отмена</button>
   </div>
 </div>
 
 <!-- MATCH MODAL -->
-<div class="match-screen" id="match-modal">
-  <div style="font-size:48px; margin-bottom:16px">🎉</div>
-  <div class="match-title">Это матч!</div>
-  <div class="match-sub">Вы оба лайкнули друг друга</div>
-  <div class="match-avatars">
-    <div class="match-avatar" id="match-my-avatar">👤</div>
-    <div class="match-heart">💜</div>
-    <div class="match-avatar" id="match-their-avatar">👤</div>
+<div class="match-modal-overlay" id="match-modal">
+  <div class="match-modal">
+    <div class="match-modal-title">⚡ Матч!</div>
+    <div class="match-modal-sub">Вы оба лайкнули друг друга</div>
+    <div class="match-modal-avatars">
+      <div class="match-avatar-circle" id="match-my-avatar">👤</div>
+      <div class="match-heart">💚</div>
+      <div class="match-avatar-circle" id="match-their-avatar">👤</div>
+    </div>
+    <div class="match-modal-name" id="match-modal-name"></div>
+    <a class="match-modal-btn" id="match-write-btn" href="#" target="_blank">✍ Написать</a>
+    <button class="match-modal-skip" onclick="closeMatchModal()">Продолжить свайп</button>
   </div>
-  <div class="match-name" id="match-name"></div>
-  <div class="match-game" id="match-game"></div>
-  <button class="btn-primary" id="match-write-btn">Написать сообщение</button>
-  <button class="btn-secondary" onclick="closeMatch()">Продолжить поиск</button>
 </div>
 
-<!-- FILTERS -->
-<div class="filter-overlay" id="filter-overlay" onclick="closeFilters()"></div>
-<div class="filters-panel" id="filters-panel">
-  <div class="filters-title">Фильтры</div>
-  <div class="filter-label">Игра</div>
-  <div class="filter-chips" id="filter-games">
-    <button class="chip active" data-game="all" onclick="toggleFilter(this,'game')">Все</button>
-    <button class="chip" data-game="dota2" onclick="toggleFilter(this,'game')">🎮 Dota 2</button>
-    <button class="chip" data-game="cs2" onclick="toggleFilter(this,'game')">🔫 CS2</button>
-    <button class="chip" data-game="valorant" onclick="toggleFilter(this,'game')">⚡ Valorant</button>
-    <button class="chip" data-game="mobile_legends" onclick="toggleFilter(this,'game')">📱 ML</button>
-    <button class="chip" data-game="pubg" onclick="toggleFilter(this,'game')">🪖 PUBG</button>
-    <button class="chip" data-game="lol" onclick="toggleFilter(this,'game')">⚔️ LoL</button>
-  </div>
-  <div class="filter-label">Ищу</div>
-  <div class="filter-chips">
-    <button class="chip active" data-seek="any" onclick="toggleFilter(this,'seek')">Всех</button>
-    <button class="chip" data-seek="male" onclick="toggleFilter(this,'seek')">👦 Парней</button>
-    <button class="chip" data-seek="female" onclick="toggleFilter(this,'seek')">👧 Девушек</button>
-  </div>
-  <button class="btn-primary" onclick="applyFilters()" style="margin-top:8px">Применить</button>
-</div>
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
 <script>
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 
-function getTelegramUserId() {
-  // Метод 1: initDataUnsafe
-  const id1 = tg?.initDataUnsafe?.user?.id;
-  if (id1) return id1;
-  
-  // Метод 2: парсим initData вручную
-  try {
-    const initData = tg?.initData;
-    if (initData) {
-      const params = new URLSearchParams(initData);
-      const user = JSON.parse(decodeURIComponent(params.get('user') || '{}'));
-      if (user.id) return user.id;
-    }
-  } catch(e) {}
-  
-  return null;
-}
+const userId = tg?.initDataUnsafe?.user?.id || null;
+const myUsername = tg?.initDataUnsafe?.user?.username || null;
 
 const GAME_INFO = {
-  dota2: { name: "Dota 2", emoji: "🎮" },
-  cs2: { name: "CS2", emoji: "🔫" },
-  valorant: { name: "Valorant", emoji: "⚡" },
-  mobile_legends: { name: "Mobile Legends", emoji: "📱" },
-  pubg: { name: "PUBG Mobile", emoji: "🪖" },
-  lol: { name: "League of Legends", emoji: "⚔️" }
+  dota2:          { name: 'Dota 2',          emoji: '🎮' },
+  cs2:            { name: 'CS2',             emoji: '🔫' },
+  valorant:       { name: 'Valorant',        emoji: '⚡' },
+  lol:            { name: 'League of Legends', emoji: '⚔️' },
+  pubg:           { name: 'PUBG Mobile',     emoji: '🪖' },
+  mobile_legends: { name: 'Mobile Legends',  emoji: '📱' },
 };
 
-const API_URL = window.location.origin;
+const API = '';
 let profiles = [];
 let currentIndex = 0;
-let isDragging = false, startX = 0, currentX = 0;
-let filters = { game: "all", seek: "any" };
-
-// Demo profiles for preview
-const DEMO_PROFILES = [
-  { id: 1, name: "Алексей", age: 20, gender: "male", bio: "Ищу ADC в LoL, играю Support. Спокойный, не флеймлю 🙏", avatar_file_id: null, is_premium: true, games: [{ game: "lol", rank: "Gold", roles: ["Support","Jungler"] }, { game: "dota2", rank: "Archon", roles: ["Hard Support"] }] },
-  { id: 2, name: "Настя", age: 19, gender: "female", bio: "Midlaner в Dota, ищу нормальных тиммейтов без токсика", avatar_file_id: null, is_premium: false, games: [{ game: "dota2", rank: "Legend", roles: ["Midlaner"] }, { game: "valorant", rank: "Platinum", roles: ["Duelist"] }] },
-  { id: 3, name: "Дима", age: 22, gender: "male", bio: "CS2 faceit 10, ищу стак. Серьёзно отношусь к игре.", avatar_file_id: null, is_premium: false, games: [{ game: "cs2", rank: "Global", roles: ["AWPer","Entry Fragger"] }] },
-  { id: 4, name: "Катя", age: 21, gender: "female", bio: "Mobile Legends Mythic, ищу стабильный стак для рейтинга", avatar_file_id: null, is_premium: true, games: [{ game: "mobile_legends", rank: "Mythic", roles: ["Gold Lane","Roam"] }] },
-];
-
-function goRegister() {
-  tg?.close();
-  // Открываем бота для регистрации
-  const botUsername = 'dota2ankets_bot';
-  window.open(`https://t.me/${botUsername}?start=register`, '_blank');
-}
-
-const GAME_NAMES = {
-  dota2: "🎮 Dota 2", cs2: "🔫 CS2", valorant: "⚡ Valorant",
-  mobile_legends: "📱 Mobile Legends", pubg: "🪖 PUBG", lol: "⚔️ LoL"
-};
-
+let isDragging = false;
+let startX = 0, startY = 0, currentX = 0;
+let currentCard = null;
+let filterGame = 'all';
+let filterSeek = 'any';
 let myProfile = null;
 let editingField = null;
 
-async function loadMyProfile() {
-  const userId = getTelegramUserId();
-  if (!userId) return;
-  const res = await fetch(`${API_URL}/api/check_user?user_id=${userId}`);
-  if (!res.ok) return;
-  const data = await res.json();
-  if (!data.registered) return;
-
-  const res2 = await fetch(`${API_URL}/api/my_profile?user_id=${userId}`);
-  if (!res2.ok) return;
-  myProfile = await res2.json();
-  renderMyProfile();
-}
-
-function renderMyProfile() {
-  if (!myProfile) return;
-  const p = myProfile;
-  const gamesHtml = (p.games || []).map(g => {
-    const name = GAME_NAMES[g.game] || g.game;
-    const rank = g.rank ? ` · ${g.rank}` : '';
-    const roles = g.roles?.length ? `<div style="font-size:12px;color:var(--color-text-secondary);margin-top:2px">${g.roles.join(', ')}</div>` : '';
-    return `<div style="background:var(--color-background-secondary);border-radius:8px;padding:8px 12px;margin-bottom:8px">
-      <div style="font-weight:500;font-size:14px">${name}${rank}</div>${roles}</div>`;
-  }).join('');
-
-  const genderMap = {male:'Парень', female:'Девушка', any:'–'};
-  const seekMap = {male:'Парней', female:'Девушек', any:'Всех'};
-
-  document.getElementById('profile-content').innerHTML = `
-    <div style="text-align:center;margin:16px 0 24px">
-      <div style="width:90px;height:90px;border-radius:50%;background:var(--color-background-secondary);margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:40px;cursor:pointer" onclick="editField('avatar')">
-        ${p.avatar_file_id ? `<img src="${API_URL}/api/photo/${p.avatar_file_id}" style="width:100%;height:100%;object-fit:cover">` : '👤'}
-      </div>
-      <div style="font-size:11px;color:var(--color-text-secondary)">Нажми чтобы сменить фото</div>
-    </div>
-
-    <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:0.5px solid var(--color-border-tertiary);cursor:pointer" onclick="editField('name')">
-        <div><div style="font-size:12px;color:var(--color-text-secondary)">Имя</div><div style="font-size:15px;font-weight:500">${p.name}</div></div>
-        <span style="color:var(--color-text-secondary)">›</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:0.5px solid var(--color-border-tertiary);cursor:pointer" onclick="editField('age')">
-        <div><div style="font-size:12px;color:var(--color-text-secondary)">Возраст</div><div style="font-size:15px;font-weight:500">${p.age} лет</div></div>
-        <span style="color:var(--color-text-secondary)">›</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;cursor:pointer" onclick="editField('bio')">
-        <div style="flex:1;margin-right:8px"><div style="font-size:12px;color:var(--color-text-secondary)">О себе</div><div style="font-size:14px">${p.bio || 'Не указано'}</div></div>
-        <span style="color:var(--color-text-secondary)">›</span>
-      </div>
-    </div>
-
-    <div style="margin-bottom:16px">
-      <div style="font-size:13px;font-weight:500;margin-bottom:8px">Игры</div>
-      ${gamesHtml}
-    </div>
-
-    <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:12px 16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:14px">Анкета ${p.is_active ? 'активна' : 'скрыта'}</span>
-      <label style="position:relative;width:44px;height:24px;cursor:pointer">
-        <input type="checkbox" ${p.is_active ? 'checked' : ''} onchange="toggleActive(this)" style="opacity:0;width:0;height:0">
-        <span style="position:absolute;inset:0;background:${p.is_active ? '#6c63ff' : 'var(--color-border-secondary)'};border-radius:12px;transition:.2s"></span>
-        <span style="position:absolute;top:2px;left:${p.is_active ? '22px' : '2px'};width:20px;height:20px;background:white;border-radius:50%;transition:.2s"></span>
-      </label>
-    </div>
-  `;
-}
-
-function editField(field) {
-  editingField = field;
-  const titles = {name:'Имя', age:'Возраст', bio:'О себе', avatar:'Фото'};
-  document.getElementById('edit-modal-title').textContent = titles[field] || field;
-  const container = document.getElementById('edit-field-container');
-  const saveBtn = document.getElementById('edit-save-btn');
-  document.getElementById('edit-debug').textContent = '';
-
-  if (field === 'name') {
-    container.innerHTML = `<input type="text" id="edit-input" value="${myProfile?.name || ''}" placeholder="Твоё имя" style="width:100%;padding:12px;background:#2a2a3e;border:1px solid #444;border-radius:10px;color:#fff;font-size:16px;box-sizing:border-box;">`;
-    saveBtn.style.display = '';
-  } else if (field === 'age') {
-    container.innerHTML = `<input type="number" id="edit-input" value="${myProfile?.age || ''}" placeholder="Возраст" min="13" max="60" style="width:100%;padding:12px;background:#2a2a3e;border:1px solid #444;border-radius:10px;color:#fff;font-size:16px;box-sizing:border-box;">`;
-    saveBtn.style.display = '';
-  } else if (field === 'bio') {
-    container.innerHTML = `<textarea id="edit-input" placeholder="Расскажи о себе..." style="width:100%;height:100px;padding:12px;background:#2a2a3e;border:1px solid #444;border-radius:10px;color:#fff;font-size:15px;resize:none;box-sizing:border-box;">${myProfile?.bio || ''}</textarea>`;
-    saveBtn.style.display = '';
-  } else if (field === 'avatar') {
-    container.innerHTML = `<div style="text-align:center;padding:10px 0;color:#aaa;font-size:14px;">Смена фото — через бота</div>`;
-    saveBtn.style.display = 'none';
-  }
-
-  document.getElementById('edit-modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('edit-input')?.focus(), 100);
-}
-
-function closeEditModal() {
-  document.getElementById('edit-modal').style.display = 'none';
-  editingField = null;
-}
-
-
-async function saveEditField() {
-  const userId = getTelegramUserId();
-  const input = document.getElementById('edit-input');
-  const value = input ? input.value.trim() : '';
-  const field = editingField;
-  const dbg = document.getElementById('edit-debug');
-
-  dbg.textContent = `uid=${userId} f=${field} v=${value}`;
-
-  if (!userId || !field || !value) {
-    dbg.textContent += ' — missing data!';
+// ===== INIT =====
+async function init() {
+  if (!userId) {
+    showNotRegistered();
     return;
   }
-
-  dbg.textContent += ' → saving...';
-  try {
-    const res = await fetch(`${API_URL}/api/update_profile`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({user_id: Number(userId), field: field, value: value})
-    });
-    dbg.textContent += ` [${res.status}]`;
-    if (res.ok) {
-      closeEditModal();
-      myProfile = null;
-      await loadMyProfile();
-    }
-  } catch(e) {
-    dbg.textContent += ` ERR: ${e.message}`;
+  const res = await fetch(`${API}/api/check_user?user_id=${userId}`);
+  const data = await res.json();
+  if (!data.registered) {
+    showNotRegistered();
+    return;
   }
+  loadProfiles();
+  loadMyProfile();
 }
 
-async function toggleActive(checkbox) {
-  const userId = getTelegramUserId();
-  if (!userId) return;
-  await fetch(`${API_URL}/api/toggle_active`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({user_id: userId})
-  });
-  if (myProfile) myProfile.is_active = checkbox.checked;
+function showNotRegistered() {
+  document.getElementById('loading-state').innerHTML = `
+    <div class="not-registered">
+      <div class="not-reg-icon">🎮</div>
+      <div class="not-reg-title">Нет анкеты</div>
+      <div class="not-reg-text">Зарегистрируйся в боте чтобы<br>искать тиммейтов</div>
+      <button class="not-reg-btn" onclick="tg?.close()">Открыть бота</button>
+    </div>`;
 }
 
+// ===== SCREENS =====
+function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  btn.classList.add('active');
+
+  if (name === 'matches') loadMatches();
+  if (name === 'profile') loadMyProfile();
+}
+
+// ===== PROFILES / SWIPE =====
 async function loadProfiles() {
-  const debugEl = document.getElementById('debug-info');
+  if (!userId) return;
+  document.getElementById('loading-state').style.display = 'flex';
+  document.getElementById('loading-state').innerHTML = '<div class="loading-spinner"></div><div class="loading-text">Загрузка...</div>';
+  document.getElementById('swipe-actions').style.display = 'none';
+
   try {
-    const userId = getTelegramUserId();
-    if (debugEl) debugEl.textContent = 'User ID: ' + userId + ' | initData: ' + (tg?.initData ? 'YES' : 'NO');
-    
-    if (!userId) {
-      if (debugEl) debugEl.textContent = 'NO USER ID!';
-      document.getElementById('screen-notregistered').style.display = 'flex';
+    const res = await fetch(`${API}/api/profiles?user_id=${userId}&game=${filterGame}&seek=${filterSeek}`);
+    profiles = await res.json();
+    currentIndex = 0;
+
+    document.getElementById('loading-state').style.display = 'none';
+
+    const container = document.getElementById('cards-container');
+    // Убираем старые карточки
+    container.querySelectorAll('.card').forEach(c => c.remove());
+
+    if (!profiles.length) {
+      showEmpty();
       return;
     }
 
-    // Проверяем регистрацию
-    const checkRes = await fetch(`${API_URL}/api/check_user?user_id=${userId}`);
-    if (checkRes.ok) {
-      const checkData = await checkRes.json();
-      if (!checkData.registered) {
-        document.getElementById('screen-notregistered').style.display = 'flex';
-        return;
-      }
-    }
-    const url = `${API_URL}/api/profiles?user_id=${userId}&game=${filters.game}&seek=${filters.seek}`;
-    if (debugEl) debugEl.textContent += ' | fetching...';
-    const res = await fetch(url);
-    if (debugEl) debugEl.textContent += ' | status:' + res.status;
-    if (res.ok) {
-      profiles = await res.json();
-      if (debugEl) debugEl.textContent += ' | profiles:' + profiles.length;
-      if (profiles.length === 0) {
-        document.getElementById('empty-state').style.display = 'flex';
-      }
-    } else {
-      profiles = DEMO_PROFILES;
-      if (debugEl) debugEl.textContent += ' | ERROR using demo';
-    }
+    document.getElementById('swipe-actions').style.display = 'flex';
+    renderCard(profiles[currentIndex]);
   } catch(e) {
-    if (debugEl) debugEl.textContent = 'ERROR: ' + e.message;
-    profiles = DEMO_PROFILES;
-  }
-  currentIndex = 0;
-  renderCard();
-}
-
-function renderCard() {
-  const stack = document.getElementById("card-stack");
-  const existing = stack.querySelectorAll(".profile-card");
-  existing.forEach(c => c.remove());
-
-  if (currentIndex >= profiles.length) {
-    document.getElementById("empty-state").style.display = "flex";
-    return;
-  }
-  document.getElementById("empty-state").style.display = "none";
-
-  for (let i = Math.min(currentIndex + 1, profiles.length - 1); i >= currentIndex; i--) {
-    const p = profiles[i];
-    const card = createCard(p);
-    if (i === currentIndex) {
-      card.style.zIndex = 10;
-      setupDrag(card, p);
-    } else {
-      card.style.zIndex = 5;
-      card.style.transform = "scale(0.95) translateY(10px)";
-      card.style.opacity = "0.7";
-    }
-    stack.appendChild(card);
+    showEmpty('Ошибка загрузки');
   }
 }
 
-function createCard(p) {
-  const card = document.createElement("div");
-  card.className = "profile-card";
-  card.dataset.id = p.id;
+function renderCard(profile) {
+  const container = document.getElementById('cards-container');
+  container.querySelectorAll('.card').forEach(c => c.remove());
 
-  const avatarContent = p.avatar_file_id
-    ? `<img src="${API_URL}/photo/${p.avatar_file_id}" alt="${p.name}">`
-    : `<span style="font-size:80px">👤</span>`;
+  if (!profile) { showEmpty(); return; }
 
-  const gamesHtml = (p.games || []).map(g => {
-    const info = GAME_INFO[g.game] || { emoji: "🎮", name: g.game };
-    const rolesStr = g.roles?.length ? `<div class="roles-text">${g.roles.join(", ")}</div>` : "";
-    const rankStr = g.rank ? ` · ${g.rank}` : "";
-    return `<div><div class="game-tag ${g.game}">${info.emoji} ${info.name}${rankStr}</div>${rolesStr}</div>`;
-  }).join("");
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.id = 'current-card';
 
-  const premiumBadge = p.is_premium ? `<div class="premium-badge">💎 Premium</div>` : "";
+  const photoHtml = profile.avatar_file_id
+    ? `<img class="card-photo" src="${API}/api/photo/${profile.avatar_file_id}" alt="" onerror="this.parentElement.innerHTML='<div class=\\'card-photo-placeholder\\'><div class=\\'profile-photo-bg\\'></div><div class=\\'avatar-icon\\'>👤</div><div class=\\'card-photo-overlay\\'></div></div>'">`
+    : `<div class="card-photo-placeholder"><div class="profile-photo-bg"></div><div class="avatar-icon">👤</div><div class="card-photo-overlay"></div></div>`;
+
+  const genderLabel = profile.gender === 'male' ? '👦 Парень' : profile.gender === 'female' ? '👧 Девушка' : '';
+  const genderClass = profile.gender === 'male' ? 'male' : 'female';
+
+  const bioHtml = profile.bio
+    ? `<div class="card-bio">"${profile.bio}"</div>`
+    : '';
+
+  const gamesHtml = (profile.games || []).map(g => {
+    const info = GAME_INFO[g.game] || { name: g.game, emoji: '🎮' };
+    const roles = Array.isArray(g.roles) && g.roles.length ? g.roles.join(' · ') : '';
+    const rankHtml = g.rank ? `<span class="game-rank">${g.rank}</span>` : '';
+    return `
+      <div class="game-tag ${g.game}">
+        <span class="game-emoji">${info.emoji}</span>
+        <div class="game-info">
+          <div class="game-name">${info.name}</div>
+          ${roles ? `<div class="game-details">${roles}</div>` : ''}
+        </div>
+        ${rankHtml}
+      </div>`;
+  }).join('');
 
   card.innerHTML = `
-    <div class="indicator like">ЛАЙК</div>
-    <div class="indicator nope">ПРОПУСК</div>
-    <div class="card-img">${avatarContent}</div>
-    <div class="card-body">
-      ${premiumBadge}
-      <div class="card-name">${p.name}</div>
-      <div class="card-age">${p.age} лет · ${p.gender === 'male' ? 'Парень' : p.gender === 'female' ? 'Девушка' : '–'}</div>
-      ${p.bio ? `<div class="card-bio">${p.bio}</div>` : ""}
-      <div class="games-list">${gamesHtml}</div>
-    </div>
-  `;
-  return card;
+    <div class="like-label" id="like-label">LIKE</div>
+    <div class="nope-label" id="nope-label">NOPE</div>
+    ${photoHtml}
+    <div class="card-info">
+      <div class="card-name-row">
+        <div class="card-name">${profile.name}</div>
+        <div class="card-age">${profile.age}</div>
+        ${genderLabel ? `<div class="card-gender ${genderClass}">${genderLabel}</div>` : ''}
+      </div>
+      ${bioHtml}
+      <div class="card-games">${gamesHtml}</div>
+    </div>`;
+
+  container.appendChild(card);
+  currentCard = card;
+  initSwipe(card, profile);
 }
 
-function setupDrag(card, profile) {
-  let startX, startY, moved = false;
+function showEmpty(msg) {
+  document.getElementById('swipe-actions').style.display = 'none';
+  const container = document.getElementById('cards-container');
+  container.querySelectorAll('.card').forEach(c => c.remove());
+  let existing = document.getElementById('loading-state');
+  if (!existing) {
+    existing = document.createElement('div');
+    existing.id = 'loading-state';
+    container.appendChild(existing);
+  }
+  existing.style.display = 'flex';
+  existing.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">🎮</div>
+      <div class="empty-title">${msg || 'Игроки закончились'}</div>
+      <div class="empty-text">Попробуй позже или измени фильтры</div>
+      <button class="modal-save" style="margin-top:16px;width:auto;padding:12px 24px" onclick="loadProfiles()">🔄 Обновить</button>
+    </div>`;
+}
 
-  card.addEventListener("mousedown", e => { startX = e.clientX; startY = e.clientY; isDragging = true; moved = false; });
-  card.addEventListener("touchstart", e => { startX = e.touches[0].clientX; startY = e.touches[0].clientY; isDragging = true; moved = false; }, { passive: true });
+// ===== SWIPE LOGIC =====
+function initSwipe(card, profile) {
+  card.addEventListener('mousedown', e => startDrag(e.clientX, e.clientY));
+  card.addEventListener('touchstart', e => startDrag(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
 
-  document.addEventListener("mousemove", e => {
-    if (!isDragging) return;
-    const dx = e.clientX - startX;
-    moved = Math.abs(dx) > 5;
-    card.style.transform = `translateX(${dx}px) rotate(${dx * 0.05}deg)`;
-    const likeInd = card.querySelector(".indicator.like");
-    const nopeInd = card.querySelector(".indicator.nope");
-    likeInd.style.opacity = Math.max(0, dx / 80);
-    nopeInd.style.opacity = Math.max(0, -dx / 80);
-  });
+  document.addEventListener('mousemove', e => onDrag(e.clientX));
+  document.addEventListener('touchmove', e => onDrag(e.touches[0].clientX), { passive: true });
 
-  document.addEventListener("touchmove", e => {
-    if (!isDragging) return;
-    const dx = e.touches[0].clientX - startX;
-    moved = Math.abs(dx) > 5;
-    card.style.transform = `translateX(${dx}px) rotate(${dx * 0.05}deg)`;
-    const likeInd = card.querySelector(".indicator.like");
-    const nopeInd = card.querySelector(".indicator.nope");
-    likeInd.style.opacity = Math.max(0, dx / 80);
-    nopeInd.style.opacity = Math.max(0, -dx / 80);
-  }, { passive: true });
+  document.addEventListener('mouseup', () => endDrag(profile));
+  document.addEventListener('touchend', () => endDrag(profile));
+}
 
-  const endDrag = (clientX) => {
-    if (!isDragging) return;
-    isDragging = false;
-    const dx = clientX - startX;
-    if (Math.abs(dx) > 80) {
-      finishSwipe(card, profile, dx > 0 ? "right" : "left");
+function startDrag(x, y) {
+  if (!currentCard) return;
+  isDragging = true;
+  startX = x;
+  startY = y;
+  currentX = 0;
+  currentCard.style.transition = 'none';
+}
+
+function onDrag(x) {
+  if (!isDragging || !currentCard) return;
+  currentX = x - startX;
+  const rotate = currentX * 0.08;
+  currentCard.style.transform = `translateX(${currentX}px) rotate(${rotate}deg)`;
+
+  const likeLabel = document.getElementById('like-label');
+  const nopeLabel = document.getElementById('nope-label');
+  if (likeLabel && nopeLabel) {
+    if (currentX > 30) {
+      likeLabel.style.opacity = Math.min(currentX / 80, 1);
+      nopeLabel.style.opacity = 0;
+      currentCard.classList.add('like-glow');
+      currentCard.classList.remove('nope-glow');
+    } else if (currentX < -30) {
+      nopeLabel.style.opacity = Math.min(-currentX / 80, 1);
+      likeLabel.style.opacity = 0;
+      currentCard.classList.add('nope-glow');
+      currentCard.classList.remove('like-glow');
     } else {
-      card.style.transform = "";
-      card.querySelectorAll(".indicator").forEach(i => i.style.opacity = 0);
+      likeLabel.style.opacity = 0;
+      nopeLabel.style.opacity = 0;
+      currentCard.classList.remove('like-glow', 'nope-glow');
     }
-  };
-
-  document.addEventListener("mouseup", e => endDrag(e.clientX));
-  document.addEventListener("touchend", e => endDrag(e.changedTouches[0].clientX));
+  }
 }
 
-function swipe(dir) {
-  if (currentIndex >= profiles.length) return;
-  const card = document.querySelector(".profile-card[style*='z-index: 10'], .profile-card:last-child");
-  const profile = profiles[currentIndex];
-  if (card) finishSwipe(card, profile, dir);
+function endDrag(profile) {
+  if (!isDragging || !currentCard) return;
+  isDragging = false;
+
+  const threshold = 80;
+  if (currentX > threshold) {
+    flyOut('right', profile);
+  } else if (currentX < -threshold) {
+    flyOut('left', profile);
+  } else {
+    currentCard.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+    currentCard.style.transform = '';
+    currentCard.classList.remove('like-glow', 'nope-glow');
+  }
 }
 
-function finishSwipe(card, profile, dir) {
-  card.classList.add(dir === "right" ? "swiping-right" : "swiping-left");
-  if (dir === "right") sendLike(profile);
-  setTimeout(() => { card.remove(); currentIndex++; renderCard(); }, 300);
+function flyOut(dir, profile) {
+  if (!currentCard) return;
+  const x = dir === 'right' ? 600 : -600;
+  currentCard.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+  currentCard.style.transform = `translateX(${x}px) rotate(${dir === 'right' ? 30 : -30}deg)`;
+  currentCard.style.opacity = '0';
+
+  if (dir === 'right') sendLike(profile);
+
+  setTimeout(() => {
+    currentIndex++;
+    if (currentIndex < profiles.length) {
+      renderCard(profiles[currentIndex]);
+    } else {
+      currentCard = null;
+      loadProfiles();
+    }
+  }, 350);
+}
+
+function handleLike() {
+  if (!currentCard || currentIndex >= profiles.length) return;
+  flyOut('right', profiles[currentIndex]);
+}
+
+function handleNope() {
+  if (!currentCard || currentIndex >= profiles.length) return;
+  flyOut('left', profiles[currentIndex]);
 }
 
 async function sendLike(profile) {
-  const userId = getTelegramUserId();
-  if (!userId) { showMatchDemo(profile); return; }
+  if (!userId) return;
   try {
-    const res = await fetch(`${API_URL}/api/like`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch(`${API}/api/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ from_id: userId, to_id: profile.id })
     });
     const data = await res.json();
-    if (data.matched) showMatch(profile);
-  } catch { showMatchDemo(profile); }
-}
-
-function showMatchDemo(profile) {
-  if (Math.random() > 0.7) showMatch(profile);
-}
-
-function showMatch(profile) {
-  document.getElementById("match-name").textContent = profile.name;
-  const games = (profile.games || []).map(g => (GAME_INFO[g.game]?.emoji || "🎮") + " " + (GAME_INFO[g.game]?.name || g.game)).join(", ");
-  document.getElementById("match-game").textContent = games;
-  document.getElementById("match-modal").classList.add("show");
-  const writeBtn = document.getElementById("match-write-btn");
-  if (profile.username) {
-    writeBtn.onclick = () => { tg?.close(); openLink(`https://t.me/${profile.username}`); };
-  } else {
-    writeBtn.textContent = "Написать через бота";
-    writeBtn.onclick = () => { tg?.sendData(JSON.stringify({ action: "write", to_id: profile.id })); };
+    if (data.matched) showMatchModal(profile);
+    else showToast('❤️ Лайк отправлен!');
+  } catch(e) {
+    console.error(e);
   }
 }
 
-function closeMatch() { document.getElementById("match-modal").classList.remove("show"); }
-
-function superLike() {
-  if (currentIndex >= profiles.length) return;
-  const profile = profiles[currentIndex];
-  tg?.HapticFeedback?.impactOccurred("heavy");
-  swipe("right");
+// ===== FILTERS =====
+function toggleFilters() {
+  document.getElementById('filters-panel').classList.toggle('open');
 }
 
-function boostProfile() {
-  tg?.HapticFeedback?.notificationOccurred("warning");
-  alert("💎 Буст доступен в Premium! Оформи подписку за 99₽/мес");
-}
-
-function buyPremium() {
-  tg?.sendData(JSON.stringify({ action: "buy_premium" }));
-}
-
-function showScreen(name) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById("screen-" + name).classList.add("active");
-  if (name === "matches") loadMatches();
-  if (name === "profile") loadMyProfile();
-  document.querySelectorAll(".nav-item").forEach((b, i) => {
-    const screens = ["browse","matches","profile","premium"];
-    b.classList.toggle("active", screens[i] === name);
-  });
-}
-
-async function loadMatches() {
-  const list = document.getElementById("matches-list");
-  list.innerHTML = "";
-  const userId = tg?.initDataUnsafe?.user?.id;
-  let matches = [];
-  if (userId) {
-    try {
-      const res = await fetch(`${API_URL}/api/matches?user_id=${userId}`);
-      if (res.ok) matches = await res.json();
-    } catch {}
-  }
-  if (!matches.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">Нет матчей пока</div><div class="empty-sub">Лайкай анкеты и находи тиммейтов!</div></div>`;
-    return;
-  }
-  matches.forEach(m => {
-    const div = document.createElement("div");
-    div.className = "match-item";
-    div.innerHTML = `
-      <div class="match-item-avatar">${m.avatar_file_id ? `<img src="${API_URL}/photo/${m.avatar_file_id}">` : "👤"}</div>
-      <div class="match-item-info">
-        <div class="match-item-name">${m.name}, ${m.age}</div>
-        <div class="match-item-games">${(m.games || []).map(g => GAME_INFO[g]?.name || g).join(", ")}</div>
-      </div>
-      <div class="match-item-action">→</div>
-    `;
-    if (m.username) {
-      div.onclick = () => tg?.openTelegramLink(`https://t.me/${m.username}`);
-      div.querySelector('.match-item-action').textContent = '→';
-    } else {
-      div.querySelector('.match-item-action').textContent = '';
-      div.querySelector('.match-item-games').textContent += ' · напиши через бота';
-      div.style.cursor = 'default';
-    }
-    list.appendChild(div);
-  });
-}
-
-function openFilters() {
-  document.getElementById("filters-panel").classList.add("open");
-  document.getElementById("filter-overlay").classList.add("show");
-}
-
-function closeFilters() {
-  document.getElementById("filters-panel").classList.remove("open");
-  document.getElementById("filter-overlay").classList.remove("show");
-}
-
-function toggleFilter(btn, type) {
-  const parent = btn.parentElement;
-  parent.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
-  btn.classList.add("active");
+function selectChip(el, type) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  if (type === 'game') filterGame = el.dataset.val;
+  if (type === 'seek') filterSeek = el.dataset.val;
 }
 
 function applyFilters() {
-  const activeGame = document.querySelector("#filter-games .chip.active");
-  if (activeGame) filters.game = activeGame.dataset.game;
-  closeFilters();
+  toggleFilters();
   loadProfiles();
 }
 
-loadProfiles();
+// ===== MATCH MODAL =====
+function showMatchModal(profile) {
+  const overlay = document.getElementById('match-modal');
+  document.getElementById('match-modal-name').textContent = profile.name;
+
+  const theirAvatar = document.getElementById('match-their-avatar');
+  if (profile.avatar_file_id) {
+    theirAvatar.innerHTML = `<img src="${API}/api/photo/${profile.avatar_file_id}" alt="">`;
+  } else {
+    theirAvatar.textContent = '👤';
+  }
+
+  const writeBtn = document.getElementById('match-write-btn');
+  if (profile.username) {
+    writeBtn.href = `https://t.me/${profile.username}`;
+  } else {
+    writeBtn.href = `tg://user?id=${profile.id}`;
+  }
+
+  overlay.classList.add('open');
+}
+
+function closeMatchModal() {
+  document.getElementById('match-modal').classList.remove('open');
+}
+
+// ===== MATCHES =====
+async function loadMatches() {
+  if (!userId) return;
+  const list = document.getElementById('matches-list');
+  list.innerHTML = '<div class="loading"><div class="loading-spinner"></div></div>';
+
+  try {
+    const res = await fetch(`${API}/api/matches?user_id=${userId}`);
+    const matches = await res.json();
+    document.getElementById('matches-count').textContent = matches.length ? `${matches.length} совпадений` : 'Пока нет матчей';
+
+    if (!matches.length) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">💔</div>
+          <div class="empty-title">Матчей пока нет</div>
+          <div class="empty-text">Свайпай и лайкай игроков —<br>когда кто-то лайкнет тебя в ответ,<br>появится матч!</div>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = matches.map(m => {
+      const games = (m.games || []).map(g => {
+        const info = GAME_INFO[g] || { name: g, emoji: '🎮' };
+        return `${info.emoji} ${info.name}`;
+      }).join('  ·  ');
+
+      const avatarHtml = m.avatar_file_id
+        ? `<img class="match-avatar" src="${API}/api/photo/${m.avatar_file_id}" alt="" onerror="this.outerHTML='<div class=\\'match-avatar-placeholder\\'>👤</div>'">`
+        : `<div class="match-avatar-placeholder">👤</div>`;
+
+      const writeUrl = m.username ? `https://t.me/${m.username}` : `tg://user?id=${m.id}`;
+      const writeBtn = `
+        <a class="match-write-btn" href="${writeUrl}" target="_blank">
+          <div class="match-write-icon">✍️</div>
+        </a>`;
+
+      return `
+        <div class="match-card">
+          ${avatarHtml}
+          <div class="match-info">
+            <div class="match-name">${m.name} <span class="match-age">${m.age}</span></div>
+            <div class="match-games">${games || 'Игры не указаны'}</div>
+          </div>
+          ${writeBtn}
+        </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-text">Ошибка загрузки</div></div>';
+  }
+}
+
+// ===== MY PROFILE =====
+async function loadMyProfile() {
+  if (!userId) return;
+  try {
+    const res = await fetch(`${API}/api/my_profile?user_id=${userId}`);
+    if (!res.ok) return;
+    myProfile = await res.json();
+
+    document.getElementById('pf-name').textContent = myProfile.name || '—';
+    document.getElementById('pf-age').textContent = myProfile.age || '—';
+    document.getElementById('pf-bio').textContent = myProfile.bio || 'Нет описания';
+    document.getElementById('pf-bio').style.fontStyle = myProfile.bio ? 'normal' : 'italic';
+
+    const toggle = document.getElementById('active-toggle');
+    if (myProfile.is_active) toggle.classList.add('on');
+    else toggle.classList.remove('on');
+
+    if (myProfile.is_premium) {
+      document.getElementById('header-badge').textContent = '💎 PREMIUM';
+      document.getElementById('header-badge').style.borderColor = 'var(--yellow)';
+      document.getElementById('header-badge').style.color = 'var(--yellow)';
+    }
+
+    // Фото
+    const photoSection = document.getElementById('profile-photo-section');
+    const placeholder = document.getElementById('profile-avatar-placeholder');
+    if (myProfile.avatar_file_id) {
+      let img = photoSection.querySelector('.profile-avatar-img');
+      if (!img) {
+        img = document.createElement('img');
+        img.className = 'profile-avatar-img';
+        photoSection.insertBefore(img, placeholder);
+      }
+      img.src = `${API}/api/photo/${myProfile.avatar_file_id}`;
+      placeholder.style.display = 'none';
+    }
+
+    // Игры
+    const gamesList = document.getElementById('profile-games-list');
+    gamesList.innerHTML = (myProfile.games || []).map(g => {
+      const info = GAME_INFO[g.game] || { name: g.game, emoji: '🎮' };
+      const roles = Array.isArray(g.roles) && g.roles.length ? g.roles.join(' · ') : '';
+      const rank = g.rank ? `<span class="game-rank">${g.rank}</span>` : '';
+      return `
+        <div class="game-tag ${g.game}">
+          <span class="game-emoji">${info.emoji}</span>
+          <div class="game-info">
+            <div class="game-name">${info.name}</div>
+            ${roles ? `<div class="game-details">${roles}</div>` : ''}
+          </div>
+          ${rank}
+        </div>`;
+    }).join('');
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ===== EDIT =====
+function openEdit(field, title, currentVal) {
+  editingField = field;
+  document.getElementById('edit-modal-title').textContent = title;
+  const input = document.getElementById('edit-modal-input');
+  input.value = (currentVal === '—' || currentVal === 'Нет описания') ? '' : currentVal;
+  input.type = field === 'age' ? 'number' : 'text';
+  input.placeholder = field === 'bio' ? 'Расскажи о себе...' : '';
+  document.getElementById('edit-modal').classList.add('open');
+  setTimeout(() => input.focus(), 300);
+}
+
+function closeEdit() {
+  document.getElementById('edit-modal').classList.remove('open');
+  editingField = null;
+}
+
+async function saveEdit() {
+  if (!editingField || !userId) return;
+  const value = document.getElementById('edit-modal-input').value.trim();
+  if (!value && editingField !== 'bio') return;
+
+  try {
+    const res = await fetch(`${API}/api/update_profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, field: editingField, value: value || '' })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      closeEdit();
+      showToast('✅ Сохранено!');
+      loadMyProfile();
+    } else {
+      showToast('❌ Ошибка сохранения');
+    }
+  } catch(e) {
+    showToast('❌ Ошибка соединения');
+  }
+}
+
+// ===== TOGGLE ACTIVE =====
+async function toggleActive() {
+  if (!userId) return;
+  try {
+    await fetch(`${API}/api/toggle_active`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId })
+    });
+    const toggle = document.getElementById('active-toggle');
+    toggle.classList.toggle('on');
+    const isOn = toggle.classList.contains('on');
+    showToast(isOn ? '✅ Анкета активна' : '🔴 Анкета скрыта');
+  } catch(e) {
+    showToast('❌ Ошибка');
+  }
+}
+
+// ===== PHOTO =====
+function changePhoto() {
+  tg?.showAlert('Чтобы сменить фото, воспользуйся командой в боте:\n\n👤 Моя анкета → ✏️ Редактировать → 📷 Фото');
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== START =====
+init();
 </script>
 </body>
 </html>
