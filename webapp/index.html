@@ -1578,15 +1578,30 @@ function showEmpty(msg) {
 }
 
 // ===== SWIPE LOGIC =====
+let mouseMoveFn = null;
+let touchMoveFn = null;
+let mouseUpFn = null;
+let touchEndFn = null;
+
 function initSwipe(card, profile) {
+  // Удаляем старые слушатели перед добавлением новых
+  if (mouseMoveFn) document.removeEventListener('mousemove', mouseMoveFn);
+  if (touchMoveFn) document.removeEventListener('touchmove', touchMoveFn);
+  if (mouseUpFn) document.removeEventListener('mouseup', mouseUpFn);
+  if (touchEndFn) document.removeEventListener('touchend', touchEndFn);
+
+  mouseMoveFn = e => onDrag(e.clientX);
+  touchMoveFn = e => onDrag(e.touches[0].clientX);
+  mouseUpFn = () => endDrag(profile);
+  touchEndFn = () => endDrag(profile);
+
   card.addEventListener('mousedown', e => startDrag(e.clientX, e.clientY));
   card.addEventListener('touchstart', e => startDrag(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
 
-  document.addEventListener('mousemove', e => onDrag(e.clientX));
-  document.addEventListener('touchmove', e => onDrag(e.touches[0].clientX), { passive: true });
-
-  document.addEventListener('mouseup', () => endDrag(profile));
-  document.addEventListener('touchend', () => endDrag(profile));
+  document.addEventListener('mousemove', mouseMoveFn);
+  document.addEventListener('touchmove', touchMoveFn, { passive: true });
+  document.addEventListener('mouseup', mouseUpFn);
+  document.addEventListener('touchend', touchEndFn);
 }
 
 function startDrag(x, y) {
@@ -1641,25 +1656,33 @@ function endDrag(profile) {
   }
 }
 
+let isFlyingOut = false;
+
 function flyOut(dir, profile) {
-  if (!currentCard) return;
+  if (!currentCard || isFlyingOut) return;
+  isFlyingOut = true;
+
+  const cardToRemove = currentCard;
+  currentCard = null;
+
   const x = dir === 'right' ? 600 : -600;
-  currentCard.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-  currentCard.style.transform = `translateX(${x}px) rotate(${dir === 'right' ? 30 : -30}deg)`;
-  currentCard.style.opacity = '0';
+  cardToRemove.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+  cardToRemove.style.transform = `translateX(${x}px) rotate(${dir === 'right' ? 30 : -30}deg)`;
+  cardToRemove.style.opacity = '0';
 
   // Запоминаем просмотренного
   seenIds.add(profile.id);
 
+  // Отправляем лайк только вправо
   if (dir === 'right') sendLike(profile);
 
   setTimeout(() => {
+    cardToRemove.remove();
+    isFlyingOut = false;
     currentIndex++;
     if (currentIndex < profiles.length) {
       renderCard(profiles[currentIndex]);
     } else {
-      currentCard = null;
-      // Пробуем загрузить новых (фильтруя уже просмотренных)
       loadProfiles();
     }
   }, 350);
