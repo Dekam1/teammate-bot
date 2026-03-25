@@ -95,6 +95,18 @@
     text-transform: uppercase;
   }
 
+  .premium-badge {
+    font-size: 14px;
+    display: inline-block;
+    animation: premiumPulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px rgba(255,214,0,0.8));
+  }
+
+  @keyframes premiumPulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255,214,0,0.6)); }
+    50% { transform: scale(1.2); filter: drop-shadow(0 0 10px rgba(255,214,0,1)); }
+  }
+
   .header-badge {
     font-size: 11px;
     padding: 3px 8px;
@@ -1545,7 +1557,7 @@ function renderCard(profile) {
     ${photoHtml}
     <div class="card-info">
       <div class="card-name-row">
-        <div class="card-name">${profile.name}</div>
+        <div class="card-name">${profile.name}${profile.is_premium ? ' <span class="premium-badge">💎</span>' : ''}</div>
         <div class="card-age">${profile.age}</div>
         ${genderLabel ? `<div class="card-gender ${genderClass}">${genderLabel}</div>` : ''}
       </div>
@@ -1801,7 +1813,7 @@ async function loadMatches() {
         <div class="match-card">
           ${avatarHtml}
           <div class="match-info">
-            <div class="match-name">${m.name} <span class="match-age">${m.age}</span></div>
+            <div class="match-name">${m.name}${m.is_premium ? ' <span class="premium-badge">💎</span>' : ''} <span class="match-age">${m.age}</span></div>
             <div class="match-games">${games || 'Игры не указаны'}</div>
           </div>
           ${writeBtn}
@@ -1833,6 +1845,11 @@ async function loadMyProfile() {
       document.getElementById('header-badge').textContent = '💎 PREMIUM';
       document.getElementById('header-badge').style.borderColor = 'var(--yellow)';
       document.getElementById('header-badge').style.color = 'var(--yellow)';
+      // Добавить значок рядом с именем в профиле
+      const pfName = document.getElementById('pf-name');
+      if (pfName && !pfName.querySelector('.premium-badge')) {
+        pfName.innerHTML = pfName.textContent + ' <span class="premium-badge">💎</span>';
+      }
     }
 
     // Фото
