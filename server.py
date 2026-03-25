@@ -202,7 +202,7 @@ def get_matches(user_id: int):
     conn = get_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("""
-        SELECT u.id, u.name, u.age, u.username, u.avatar_file_id
+        SELECT u.id, u.name, u.age, u.username, u.avatar_file_id, u.is_premium
         FROM matches m
         JOIN users u ON (CASE WHEN m.user1_id=%s THEN m.user2_id ELSE m.user1_id END = u.id)
         WHERE m.user1_id=%s OR m.user2_id=%s
