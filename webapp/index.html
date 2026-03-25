@@ -1338,30 +1338,55 @@ if (tg) { tg.ready(); tg.expand(); }
 let userId = null;
 let myUsername = null;
 
-// Способ 1: initDataUnsafe (самый простой)
-if (tg?.initDataUnsafe?.user?.id) {
-  userId = tg.initDataUnsafe.user.id;
-  myUsername = tg.initDataUnsafe.user.username || null;
-}
+function extractUserId() {
+  // Способ 1: initDataUnsafe (самый простой и надёжный)
+  if (tg?.initDataUnsafe?.user?.id) {
+    userId = tg.initDataUnsafe.user.id;
+    myUsername = tg.initDataUnsafe.user.username || null;
+    return true;
+  }
 
-// Способ 2: парсим initData вручную если первый не сработал
-if (!userId && tg?.initData) {
-  try {
-    const params = new URLSearchParams(tg.initData);
-    const userStr = params.get('user');
-    if (userStr) {
-      const userObj = JSON.parse(decodeURIComponent(userStr));
-      userId = userObj.id;
-      myUsername = userObj.username || null;
+  // Способ 2: start_param (передаётся через tg://resolve?start=)
+  if (tg?.initDataUnsafe?.start_param) {
+    const sp = tg.initDataUnsafe.start_param;
+    if (sp && /^\d+$/.test(sp)) {
+      userId = parseInt(sp);
+      return true;
     }
-  } catch(e) {}
-}
+  }
 
-// Способ 3: из URL параметров (для тестирования)
-if (!userId) {
+  // Способ 2: парсим initData вручную
+  if (tg?.initData) {
+    try {
+      const params = new URLSearchParams(tg.initData);
+      const userStr = params.get('user');
+      if (userStr) {
+        const userObj = JSON.parse(decodeURIComponent(userStr));
+        userId = userObj.id;
+        myUsername = userObj.username || null;
+        return true;
+      }
+    } catch(e) {}
+  }
+
+  // Способ 3: из URL параметров (для тестирования)
   const urlParams = new URLSearchParams(window.location.search);
   const uid = urlParams.get('user_id');
-  if (uid) userId = parseInt(uid);
+  if (uid) { userId = parseInt(uid); return true; }
+
+  return false;
+}
+
+// Пробуем сразу
+extractUserId();
+
+// Если не получилось — ждём немного и пробуем снова
+if (!userId) {
+  setTimeout(() => {
+    extractUserId();
+    console.log('Telegram userId (delayed):', userId);
+    init();
+  }, 500);
 }
 
 console.log('Telegram userId:', userId, 'username:', myUsername);
@@ -1378,6 +1403,7 @@ const GAME_INFO = {
 const API = '';
 let profiles = [];
 let currentIndex = 0;
+let seenIds = new Set(); // Уже просмотренные профили
 let isDragging = false;
 let startX = 0, startY = 0, currentX = 0;
 let currentCard = null;
@@ -1387,19 +1413,40 @@ let myProfile = null;
 let editingField = null;
 
 // ===== INIT =====
+let initCalled = false;
 async function init() {
+  if (initCalled) return;
   if (!userId) {
-    showNotRegistered();
+    // Ждём ещё немного — Telegram может не успеть передать данные
+    setTimeout(async () => {
+      extractUserId();
+      if (!userId) {
+        showNotRegistered();
+      } else {
+        initCalled = true;
+        const res = await fetch(`${API}/api/check_user?user_id=${userId}`);
+        const data = await res.json();
+        if (!data.registered) { showNotRegistered(); return; }
+        loadProfiles();
+        loadMyProfile();
+      }
+    }, 800);
     return;
   }
-  const res = await fetch(`${API}/api/check_user?user_id=${userId}`);
-  const data = await res.json();
-  if (!data.registered) {
+  initCalled = true;
+  try {
+    const res = await fetch(`${API}/api/check_user?user_id=${userId}`);
+    const data = await res.json();
+    if (!data.registered) {
+      showNotRegistered();
+      return;
+    }
+    loadProfiles();
+    loadMyProfile();
+  } catch(e) {
+    console.error('Init error:', e);
     showNotRegistered();
-    return;
   }
-  loadProfiles();
-  loadMyProfile();
 }
 
 function showNotRegistered() {
@@ -1432,7 +1479,9 @@ async function loadProfiles() {
 
   try {
     const res = await fetch(`${API}/api/profiles?user_id=${userId}&game=${filterGame}&seek=${filterSeek}`);
-    profiles = await res.json();
+    const allProfiles = await res.json();
+    // Фильтруем уже просмотренных
+    profiles = allProfiles.filter(p => !seenIds.has(p.id));
     currentIndex = 0;
 
     document.getElementById('loading-state').style.display = 'none';
@@ -1522,9 +1571,9 @@ function showEmpty(msg) {
   existing.innerHTML = `
     <div class="empty-state">
       <div class="empty-icon">🎮</div>
-      <div class="empty-title">${msg || 'Игроки закончились'}</div>
-      <div class="empty-text">Попробуй позже или измени фильтры</div>
-      <button class="modal-save" style="margin-top:16px;width:auto;padding:12px 24px" onclick="loadProfiles()">🔄 Обновить</button>
+      <div class="empty-title">${msg || 'Все просмотрены!'}</div>
+      <div class="empty-text">Ты просмотрел всех игроков. Новые появятся позже 🎮</div>
+      <button class="modal-save" style="margin-top:16px;width:auto;padding:12px 24px" onclick="seenIds.clear(); loadProfiles()">🔄 Смотреть снова</button>
     </div>`;
 }
 
@@ -1599,6 +1648,9 @@ function flyOut(dir, profile) {
   currentCard.style.transform = `translateX(${x}px) rotate(${dir === 'right' ? 30 : -30}deg)`;
   currentCard.style.opacity = '0';
 
+  // Запоминаем просмотренного
+  seenIds.add(profile.id);
+
   if (dir === 'right') sendLike(profile);
 
   setTimeout(() => {
@@ -1607,6 +1659,7 @@ function flyOut(dir, profile) {
       renderCard(profiles[currentIndex]);
     } else {
       currentCard = null;
+      // Пробуем загрузить новых (фильтруя уже просмотренных)
       loadProfiles();
     }
   }, 350);
@@ -1653,6 +1706,7 @@ function selectChip(el, type) {
 
 function applyFilters() {
   toggleFilters();
+  seenIds.clear(); // Сбрасываем просмотренных при смене фильтров
   loadProfiles();
 }
 
