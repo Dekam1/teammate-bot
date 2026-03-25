@@ -157,6 +157,14 @@ def premium_keyboard():
 
 @dp.message(CommandStart())
 async def cmd_start(message: types.Message, state: FSMContext):
+    # Проверяем deep link ?start=premium
+    args = message.text.split()
+    if len(args) > 1 and args[1] == 'premium':
+        user = await db.get_user(message.from_user.id)
+        if user:
+            await show_premium(message)
+            return
+
     user = await db.get_user(message.from_user.id)
     if user:
         await message.answer(
