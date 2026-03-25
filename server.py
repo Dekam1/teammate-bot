@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import Response
 from pydantic import BaseModel
@@ -7,16 +7,21 @@ import psycopg2.extras
 import os
 import httpx
 from dotenv import load_dotenv
+
 load_dotenv()
 app = FastAPI()
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+
 def get_conn():
     return psycopg2.connect(DATABASE_URL)
+
 def get_user(cur, user_id):
     cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
     row = cur.fetchone()
     return dict(row) if row else None
+
 async def get_user_games_text(cur, user_id):
     cur.execute("SELECT game, rank, roles FROM user_games WHERE user_id = %s", (user_id,))
     rows = cur.fetchall()
@@ -31,13 +36,16 @@ async def get_user_games_text(cur, user_id):
         roles = f" ({', '.join(r['roles'])})" if r.get('roles') else ""
         parts.append(f"{name}{rank}{roles}")
     return "\n".join(parts) if parts else "Не указаны"
+
 async def notify_user(client, sender_id, receiver):
     conn = get_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     games_text = await get_user_games_text(cur, receiver['id'])
     conn.close()
+
     gender_labels = {"male": "Парень", "female": "Девушка", "any": "–"}
     gender = gender_labels.get(receiver.get('gender', ''), '–')
+
     text = (
         f"🎉 *Это матч!*\n\n"
         f"👤 *{receiver['name']}*, {receiver['age']} лет · {gender}\n"
@@ -48,6 +56,7 @@ async def notify_user(client, sender_id, receiver):
         write_url = f"https://t.me/{receiver['username']}"
     else:
         write_url = f"tg://user?id={receiver['id']}"
+
     reply_markup = {
         "inline_keyboard": [[{
             "text": f"✍️ Написать {receiver['name']}",
@@ -74,12 +83,14 @@ async def notify_user(client, sender_id, receiver):
             await client.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json=payload)
     except Exception as e:
         print(f"Notify error for {sender_id}: {e}")
+
 async def send_match_notifications(user1, user2):
     if not BOT_TOKEN:
         return
     async with httpx.AsyncClient() as client:
         await notify_user(client, user1['id'], user2)
         await notify_user(client, user2['id'], user1)
+
 async def send_liked_notification(liker, target_id, is_premium):
     if not BOT_TOKEN:
         return
@@ -110,15 +121,18 @@ async def send_liked_notification(liker, target_id, is_premium):
                 }
             }
             await client.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json=payload)
+
 class LikeRequest(BaseModel):
     from_id: int
     to_id: int
+
 @app.get("/api/profiles")
 def get_profiles(user_id: int, game: str = "all", seek: str = "any", limit: int = 20):
     conn = get_conn()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     game_filter = "" if game == "all" else f"AND ug.game = '{game}'"
     seek_filter = "" if seek == "any" else f"AND u.gender = '{seek}'"
+
     cur.execute(f"""
         SELECT * FROM (
             SELECT DISTINCT ON (u.id) u.id, u.name, u.age, u.gender, u.bio,
@@ -141,6 +155,7 @@ def get_profiles(user_id: int, game: str = "all", seek: str = "any", limit: int 
         u["games"] = [dict(g) for g in cur.fetchall()]
     conn.close()
     return users
+
 @app.post("/api/like")
 async def like_profile(req: LikeRequest):
     conn = get_conn()
@@ -152,8 +167,10 @@ async def like_profile(req: LikeRequest):
         conn.rollback()
         conn.close()
         return {"matched": False, "duplicate": True}
+
     cur.execute("SELECT 1 FROM likes WHERE from_user_id=%s AND to_user_id=%s", (req.to_id, req.from_id))
     matched = bool(cur.fetchone())
+
     if matched:
         min_id, max_id = min(req.from_id, req.to_id), max(req.from_id, req.to_id)
         cur.execute("INSERT INTO matches (user1_id, user2_id) VALUES (%s, %s) ON CONFLICT DO NOTHING", (min_id, max_id))
@@ -168,7 +185,9 @@ async def like_profile(req: LikeRequest):
         conn.close()
         if liker and target:
             await send_liked_notification(liker, target['id'], target['is_premium'])
+
     return {"matched": matched}
+
 @app.get("/api/check_user")
 def check_user(user_id: int):
     conn = get_conn()
@@ -177,6 +196,7 @@ def check_user(user_id: int):
     row = cur.fetchone()
     conn.close()
     return {"registered": bool(row), "name": row["name"] if row else None}
+
 @app.get("/api/matches")
 def get_matches(user_id: int):
     conn = get_conn()
@@ -194,12 +214,15 @@ def get_matches(user_id: int):
         m["games"] = [r["game"] for r in cur.fetchall()]
     conn.close()
     return matches
+
 class UpdateProfileRequest(BaseModel):
     user_id: int
     field: str
     value: str
+
 class ToggleActiveRequest(BaseModel):
     user_id: int
+
 @app.get("/api/my_profile")
 def my_profile(user_id: int):
     conn = get_conn()
@@ -213,6 +236,7 @@ def my_profile(user_id: int):
     user["games"] = [dict(g) for g in cur.fetchall()]
     conn.close()
     return user
+
 @app.post("/api/update_profile")
 def update_profile(req: UpdateProfileRequest):
     allowed = {"name", "age", "bio"}
@@ -225,6 +249,7 @@ def update_profile(req: UpdateProfileRequest):
     conn.commit()  # ✅ ИСПРАВЛЕНО: добавлен commit
     conn.close()
     return {"ok": True}
+
 @app.post("/api/toggle_active")
 def toggle_active(req: ToggleActiveRequest):
     conn = get_conn()
@@ -233,6 +258,7 @@ def toggle_active(req: ToggleActiveRequest):
     conn.commit()  # ✅ ИСПРАВЛЕНО: добавлен commit
     conn.close()
     return {"ok": True}
+
 @app.get("/api/who_liked_me")
 def who_liked_me(user_id: int):
     conn = get_conn()
@@ -248,6 +274,7 @@ def who_liked_me(user_id: int):
     result = [dict(r) for r in cur.fetchall()]
     conn.close()
     return result
+
 @app.get("/api/photo/{file_id}")
 async def get_photo(file_id: str):
     async with httpx.AsyncClient() as client:
@@ -258,4 +285,43 @@ async def get_photo(file_id: str):
         path = data["result"]["file_path"]
         img = await client.get(f"https://api.telegram.org/file/bot{BOT_TOKEN}/{path}")
         return Response(content=img.content, media_type="image/jpeg")
+
+@app.post("/api/upload_photo")
+async def upload_photo(user_id: int = Form(...), photo: UploadFile = File(...)):
+    """Загрузка фото через webapp — отправляем в Telegram и сохраняем file_id"""
+    if not BOT_TOKEN:
+        raise HTTPException(500, "No bot token")
+
+    # Читаем файл
+    content = await photo.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(400, "File too large")
+
+    # Отправляем фото в Telegram через sendPhoto к самому себе (chat_id = user_id)
+    async with httpx.AsyncClient() as client:
+        files = {"photo": (photo.filename, content, photo.content_type)}
+        data = {"chat_id": user_id, "caption": "📷 Фото обновлено через webapp"}
+        r = await client.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto",
+            data=data,
+            files=files,
+            timeout=30
+        )
+        result = r.json()
+
+        if not result.get("ok"):
+            raise HTTPException(400, f"Telegram error: {result.get('description')}")
+
+        # Получаем file_id из ответа
+        file_id = result["result"]["photo"][-1]["file_id"]
+
+    # Сохраняем file_id в БД
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute("UPDATE users SET avatar_file_id=%s, updated_at=NOW() WHERE id=%s", (file_id, user_id))
+    conn.commit()
+    conn.close()
+
+    return {"ok": True, "file_id": file_id}
+
 app.mount("/", StaticFiles(directory="webapp", html=True), name="webapp")
