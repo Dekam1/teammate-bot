@@ -584,7 +584,7 @@ async def successful_payment(message: types.Message):
     if payment.invoice_payload == "premium_30days":
         # Активируем Premium на 30 дней
         premium_until = datetime.now() + timedelta(days=PREMIUM_DAYS)
-        await db.set_premium(message.from_user.id, premium_until)
+        await db.activate_premium(message.from_user.id, PREMIUM_DAYS)
 
         await message.answer(
             f"🎉 <b>Premium активирован!</b>\n\n"
