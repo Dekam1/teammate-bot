@@ -386,12 +386,12 @@ async def handle_like(callback: types.CallbackQuery):
         await callback.answer("❤️ Лайк отправлен!")
 
 @dp.message(F.text == "❤️ Мои матчи")
+@dp.message(F.text == "❤️ Мои матчи")
 async def show_matches(message: types.Message):
     user = await db.get_user(message.from_user.id)
     if not user:
         await message.answer("Сначала зарегистрируйся! /start")
         return
-
     matches = await db.get_matches(message.from_user.id)
     if not matches:
         await message.answer(
@@ -399,22 +399,29 @@ async def show_matches(message: types.Message):
             "Открывай свайп и лайкай игроков — когда кто-то лайкнет тебя в ответ, появится матч!"
         )
         return
-
     await message.answer(f"❤️ <b>Твои матчи ({len(matches)}):</b>", parse_mode="HTML")
-
     for m in matches:
         games = await db.get_user_games(m['id'])
-        games_text = " ".join([GAMES.get(g['game'], {}).get('emoji', '🎮') + " " + GAMES.get(g['game'], {}).get('name', g['game']) for g in games])
-        username_str = f"@{m['username']}" if m.get('username') else "нет username"
+        games_text = " ".join([
+            GAMES.get(g['game'], {}).get('emoji', '🎮') + " " + GAMES.get(g['game'], {}).get('name', g['game'])
+            for g in games
+        ])
+        if m.get('username'):
+            username_str = f"@{m['username']}"
+            write_url = f"https://t.me/{m['username']}"
+        else:
+            username_str = "нет username"
+            write_url = f"tg://user?id={m['id']}"
         text = (
             f"👤 <b>{m['name']}</b>, {m['age']} лет\n"
             f"🎮 {games_text}\n"
             f"📝 {m.get('bio') or 'Нет описания'}\n"
             f"Контакт: {username_str}"
         )
+        # Кнопка "Написать" есть всегда — через username или через tg://user?id=
         kb = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="✍️ Написать", url=f"https://t.me/{m['username']}")
-        ]]) if m.get('username') else None
+            InlineKeyboardButton(text="✍️ Написать", url=write_url)
+        ]])
         if m.get('avatar_file_id'):
             await message.answer_photo(m['avatar_file_id'], caption=text, parse_mode="HTML", reply_markup=kb)
         else:
