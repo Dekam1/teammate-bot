@@ -29,7 +29,7 @@ dp = Dispatcher(storage=MemoryStorage())
 db = Database(DATABASE_URL)
 
 # Стоимость Premium в Telegram Stars
-PREMIUM_PRICE_STARS = 50  # 50 звёзд = примерно 1$
+PREMIUM_PRICE_STARS = 250  # 250 звёзд = примерно 250 руб
 PREMIUM_DAYS = 30
 
 GAMES = {
