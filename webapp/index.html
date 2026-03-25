@@ -1334,8 +1334,37 @@
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 
-const userId = tg?.initDataUnsafe?.user?.id || null;
-const myUsername = tg?.initDataUnsafe?.user?.username || null;
+// Получаем userId — несколько способов для надёжности
+let userId = null;
+let myUsername = null;
+
+// Способ 1: initDataUnsafe (самый простой)
+if (tg?.initDataUnsafe?.user?.id) {
+  userId = tg.initDataUnsafe.user.id;
+  myUsername = tg.initDataUnsafe.user.username || null;
+}
+
+// Способ 2: парсим initData вручную если первый не сработал
+if (!userId && tg?.initData) {
+  try {
+    const params = new URLSearchParams(tg.initData);
+    const userStr = params.get('user');
+    if (userStr) {
+      const userObj = JSON.parse(decodeURIComponent(userStr));
+      userId = userObj.id;
+      myUsername = userObj.username || null;
+    }
+  } catch(e) {}
+}
+
+// Способ 3: из URL параметров (для тестирования)
+if (!userId) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const uid = urlParams.get('user_id');
+  if (uid) userId = parseInt(uid);
+}
+
+console.log('Telegram userId:', userId, 'username:', myUsername);
 
 const GAME_INFO = {
   dota2:          { name: 'Dota 2',          emoji: '🎮' },
