@@ -1306,10 +1306,82 @@
       <div class="nav-icon">❤️</div>
       <div class="nav-label">Матчи</div>
     </button>
+    <button class="nav-btn" onclick="showScreen('premium',this)">
+      <div class="nav-icon">💎</div>
+      <div class="nav-label">Premium</div>
+    </button>
     <button class="nav-btn" onclick="showScreen('profile',this)">
       <div class="nav-icon">👤</div>
       <div class="nav-label">Анкета</div>
     </button>
+  </div>
+</div>
+
+<!-- PREMIUM SCREEN -->
+<div class="screen" id="screen-premium" style="display:none; overflow-y:auto; padding: 20px 16px 100px;">
+  <div style="text-align:center; padding: 30px 0 20px;">
+    <div style="font-size:70px; filter: drop-shadow(0 0 20px rgba(255,214,0,0.8)); animation: pulse 2s infinite;">💎</div>
+    <div style="font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700; letter-spacing:3px; margin-top:10px;
+      background: linear-gradient(90deg, #ffd600, #ff9500, #ffd600); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+      TEAMMATE PREMIUM
+    </div>
+    <div style="color:var(--text2); font-size:13px; margin-top:5px;">Прокачай свой поиск тиммейта</div>
+  </div>
+
+  <!-- Фичи -->
+  <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:24px;">
+    <div style="background:var(--card); border:1px solid rgba(255,214,0,0.2); border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:12px;">
+      <div style="font-size:24px;">♾️</div>
+      <div>
+        <div style="font-weight:600; color:var(--text);">Безлимитные лайки</div>
+        <div style="font-size:12px; color:var(--text2);">Бесплатно: только 10 лайков в день</div>
+      </div>
+    </div>
+    <div style="background:var(--card); border:1px solid rgba(255,214,0,0.2); border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:12px;">
+      <div style="font-size:24px;">👀</div>
+      <div>
+        <div style="font-weight:600; color:var(--text);">Кто тебя лайкнул</div>
+        <div style="font-size:12px; color:var(--text2);">Видишь всех кто лайкнул твою анкету</div>
+      </div>
+    </div>
+    <div style="background:var(--card); border:1px solid rgba(255,214,0,0.2); border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:12px;">
+      <div style="font-size:24px;">🔔</div>
+      <div>
+        <div style="font-weight:600; color:var(--text);">Уведомления с именем</div>
+        <div style="font-size:12px; color:var(--text2);">Узнаёшь кто именно тебя лайкнул</div>
+      </div>
+    </div>
+    <div style="background:var(--card); border:1px solid rgba(255,214,0,0.2); border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:12px;">
+      <div style="font-size:24px;">🚀</div>
+      <div>
+        <div style="font-weight:600; color:var(--text);">Буст анкеты</div>
+        <div style="font-size:12px; color:var(--text2);">Твоя анкета показывается первой</div>
+      </div>
+    </div>
+    <div style="background:var(--card); border:1px solid rgba(255,214,0,0.2); border-radius:12px; padding:14px 16px; display:flex; align-items:center; gap:12px;">
+      <div style="font-size:24px;">💎</div>
+      <div>
+        <div style="font-weight:600; color:var(--text);">Значок Premium</div>
+        <div style="font-size:12px; color:var(--text2);">Выделяйся среди других игроков</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Цена и кнопка -->
+  <div id="premium-buy-block">
+    <div style="text-align:center; margin-bottom:14px;">
+      <div style="font-family:'Rajdhani',sans-serif; font-size:36px; font-weight:700; color:var(--yellow);">250 ⭐</div>
+      <div style="color:var(--text2); font-size:12px;">в месяц · ~250 рублей</div>
+    </div>
+    <button onclick="buyPremium()" style="width:100%; padding:16px; border:none; border-radius:14px; cursor:pointer; font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; letter-spacing:2px;
+      background: linear-gradient(135deg, #ffd600, #ff9500); color:#000; box-shadow: 0 0 30px rgba(255,214,0,0.4);">
+      ⭐ КУПИТЬ PREMIUM
+    </button>
+  </div>
+  <div id="premium-active-block" style="display:none; text-align:center; padding:20px; background:var(--card); border:1px solid rgba(255,214,0,0.3); border-radius:14px;">
+    <div style="font-size:40px;">✅</div>
+    <div style="font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; color:var(--yellow); margin-top:8px;">PREMIUM АКТИВЕН</div>
+    <div style="color:var(--text2); font-size:13px; margin-top:4px;" id="premium-until-text"></div>
   </div>
 </div>
 
@@ -1481,6 +1553,7 @@ function showScreen(name, btn) {
 
   if (name === 'matches') loadMatches();
   if (name === 'profile') loadMyProfile();
+  if (name === 'premium') loadPremiumScreen();
 }
 
 // ===== PROFILES / SWIPE =====
@@ -1825,6 +1898,31 @@ async function loadMatches() {
 }
 
 // ===== MY PROFILE =====
+// ===== PREMIUM SCREEN =====
+async function loadPremiumScreen() {
+  if (!userId) return;
+  try {
+    const res = await fetch(`${API}/api/my_profile?user_id=${userId}`);
+    const user = await res.json();
+    const buyBlock = document.getElementById('premium-buy-block');
+    const activeBlock = document.getElementById('premium-active-block');
+    if (user.is_premium && user.premium_until) {
+      const until = new Date(user.premium_until);
+      const dateStr = until.toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
+      document.getElementById('premium-until-text').textContent = `Действует до ${dateStr}`;
+      buyBlock.style.display = 'none';
+      activeBlock.style.display = 'block';
+    } else {
+      buyBlock.style.display = 'block';
+      activeBlock.style.display = 'none';
+    }
+  } catch(e) { console.error(e); }
+}
+
+function buyPremium() {
+  tg.openTelegramLink(`https://t.me/${BOT_USERNAME || 'dota2ankets_bot'}?start=premium`);
+}
+
 async function loadMyProfile() {
   if (!userId) return;
   try {
