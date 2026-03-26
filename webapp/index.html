@@ -1857,13 +1857,11 @@ function showMatchModal(profile) {
   }
 
   const writeBtn = document.getElementById('match-write-btn');
-  if (profile.username) {
-    writeBtn.onclick = () => { tg.openTelegramLink(`https://t.me/${profile.username}`); return false; };
-    writeBtn.href = '#';
-  } else {
-    writeBtn.onclick = () => { window.location.href = `tg://user?id=${profile.id}`; return false; };
-    writeBtn.href = '#';
-  }
+  writeBtn.href = '#';
+  writeBtn.onclick = () => {
+    openMatchChat(profile.id, profile.username);
+    return false;
+  };
 
   overlay.classList.add('open');
 }
@@ -1946,10 +1944,23 @@ async function loadPremiumScreen() {
 }
 
 function openMatchChat(userId, username) {
-    if (username && username !== 'null' && username !== '') {
-        tg.openTelegramLink(`https://t.me/${username}`);
-    } else {
-        tg.openTelegramLink(`tg://user?id=${userId}`);
+    try {
+        if (username && username !== 'null' && username !== '') {
+            const url = `https://t.me/${username}`;
+            if (tg && tg.openTelegramLink) {
+                tg.openTelegramLink(url);
+            } else {
+                window.open(url, '_blank');
+            }
+        } else {
+            window.location.href = `tg://user?id=${userId}`;
+        }
+    } catch(e) {
+        if (username && username !== 'null' && username !== '') {
+            window.open(`https://t.me/${username}`, '_blank');
+        } else {
+            window.location.href = `tg://user?id=${userId}`;
+        }
     }
 }
 
