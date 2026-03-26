@@ -1486,7 +1486,21 @@ const GAME_INFO = {
 const API = '';
 let profiles = [];
 let currentIndex = 0;
-let seenIds = new Set(); // Уже просмотренные профили
+// Пропущенные — сохраняем в localStorage чтобы не показывать после перезагрузки
+function getSkippedKey() { return `skipped_${userId}`; }
+function loadSkipped() {
+  try {
+    const saved = localStorage.getItem(getSkippedKey());
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  } catch { return new Set(); }
+}
+function saveSkipped(set) {
+  try { localStorage.setItem(getSkippedKey(), JSON.stringify([...set])); } catch {}
+}
+function clearSkipped() {
+  try { localStorage.removeItem(getSkippedKey()); } catch {}
+}
+let seenIds = loadSkipped(); // Загружаем пропущенных из localStorage
 let isDragging = false;
 let startX = 0, startY = 0, currentX = 0;
 let currentCard = null;
@@ -1667,7 +1681,7 @@ function showEmpty(msg) {
       <div class="empty-icon">🎮</div>
       <div class="empty-title">${msg || 'Все просмотрены!'}</div>
       <div class="empty-text">Ты просмотрел всех игроков. Новые появятся позже 🎮</div>
-      <button class="modal-save" style="margin-top:16px;width:auto;padding:12px 24px" onclick="seenIds.clear(); loadProfiles()">🔄 Смотреть снова</button>
+      <button class="modal-save" style="margin-top:16px;width:auto;padding:12px 24px" onclick="seenIds.clear(); clearSkipped(); loadProfiles()">🔄 Смотреть снова</button>
     </div>`;
 }
 
@@ -1764,8 +1778,11 @@ function flyOut(dir, profile) {
   cardToRemove.style.transform = `translateX(${x}px) rotate(${dir === 'right' ? 30 : -30}deg)`;
   cardToRemove.style.opacity = '0';
 
-  // Запоминаем просмотренного
-  seenIds.add(profile.id);
+  // Если пропустили — сохраняем в localStorage
+  if (dir === 'left') {
+    seenIds.add(profile.id);
+    saveSkipped(seenIds);
+  }
 
   // Отправляем лайк только вправо
   if (dir === 'right') sendLike(profile);
@@ -1823,7 +1840,7 @@ function selectChip(el, type) {
 
 function applyFilters() {
   toggleFilters();
-  seenIds.clear(); // Сбрасываем просмотренных при смене фильтров
+  seenIds.clear(); clearSkipped(); // Сбрасываем просмотренных при смене фильтров
   loadProfiles();
 }
 
