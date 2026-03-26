@@ -1886,12 +1886,8 @@ async function loadMatches() {
         ? `<img class="match-avatar" src="${API}/api/photo/${m.avatar_file_id}" alt="" onerror="this.outerHTML='<div class=\\'match-avatar-placeholder\\'>👤</div>'">`
         : `<div class="match-avatar-placeholder">👤</div>`;
 
-      const writeUrl = m.username ? `https://t.me/${m.username}` : null;
-      const writeBtnOnclick = writeUrl
-        ? `window.location.href='${writeUrl}'`
-        : `window.location.href='tg://user?id=${m.id}'`;
       const writeBtn = `
-        <a class="match-write-btn" href="#" onclick="${writeBtnOnclick}; return false;">
+        <a class="match-write-btn" href="#" onclick="openMatchChat(${m.id}, '${m.username || ''}'); return false;">
           <div class="match-write-icon">✍️</div>
         </a>`;
 
@@ -1930,6 +1926,14 @@ async function loadPremiumScreen() {
       activeBlock.style.display = 'none';
     }
   } catch(e) { console.error(e); }
+}
+
+function openMatchChat(userId, username) {
+    if (username && username !== 'null' && username !== '') {
+        tg.openTelegramLink(`https://t.me/${username}`);
+    } else {
+        tg.openTelegramLink(`tg://user?id=${userId}`);
+    }
 }
 
 function buyPremium() {
