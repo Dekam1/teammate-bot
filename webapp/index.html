@@ -170,907 +170,846 @@
   }
 
   .card-photo {
-    width:100%; flex:1; min-height:0;
-    object-fit:cover; display:block;
-    background:linear-gradient(135deg,#1a1a2e,#16213e);
+    width:100%; flex:1; object-fit:cover; display:block;
+    min-height:0;
   }
-  .card-no-photo {
-    width:100%; flex:1; min-height:0;
-    display:flex; align-items:center; justify-content:center;
-    background:linear-gradient(135deg,#1a1a2e,#16213e); font-size:60px;
+  .card-photo-placeholder {
+    flex:1; display:flex; align-items:center; justify-content:center;
+    font-size:80px; background:linear-gradient(135deg, var(--bg2), var(--bg3));
+    min-height:0;
   }
-
   .card-info {
-    padding:12px 14px 10px; flex-shrink:0;
-    background:linear-gradient(to top, rgba(10,10,15,0.98), rgba(10,10,15,0.7));
+    padding:14px 16px 12px;
+    background:linear-gradient(to top, rgba(10,10,20,0.98), rgba(10,10,20,0.7));
+    flex-shrink:0;
+  }
+  .card-name-row {
+    display:flex; align-items:center; gap:8px; margin-bottom:4px;
   }
   .card-name {
     font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700;
-    color:#fff; line-height:1;
+    color:#fff; letter-spacing:1px;
   }
-  .card-age-gender { font-size:13px; color:var(--text2); margin-top:2px; }
-  .card-games { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .card-age { color:var(--text2); font-size:14px; }
+  .card-premium-icon {
+    font-size:14px;
+    filter: drop-shadow(0 0 4px rgba(255,214,0,0.8));
+  }
+  .card-games {
+    display:flex; flex-wrap:wrap; gap:4px; margin-bottom:6px;
+  }
   .game-tag {
-    font-size:11px; padding:3px 8px; border-radius:20px;
-    border:1px solid rgba(0,245,255,0.3);
-    background:rgba(0,245,255,0.07); color:var(--cyan);
-    font-family:'Rajdhani',sans-serif; font-weight:600; letter-spacing:0.5px;
+    font-size:10px; padding:2px 8px;
+    border:1px solid var(--purple); border-radius:12px;
+    color:var(--purple); letter-spacing:0.5px;
+    background:rgba(123,47,255,0.1);
   }
   .card-bio {
-    font-size:12px; color:var(--text2); margin-top:6px;
-    line-height:1.4; max-height:40px; overflow:hidden;
-  }
-  .card-premium-badge {
-    position:absolute; top:10px; right:10px;
-    font-size:12px; padding:3px 8px; border-radius:20px;
-    background:rgba(255,214,0,0.15); border:1px solid rgba(255,214,0,0.5);
-    color:var(--yellow); font-family:'Rajdhani',sans-serif;
-  }
-  .card-liked-badge {
-    position:absolute; top:10px; left:10px;
-    font-size:12px; padding:3px 8px; border-radius:20px;
-    background:rgba(255,0,110,0.15); border:1px solid rgba(255,0,110,0.5);
-    color:var(--pink); font-family:'Rajdhani',sans-serif;
+    font-size:12px; color:var(--text2); line-height:1.4;
   }
 
-  /* Оверлеи при свайпе */
-  .swipe-overlay {
-    position:absolute; top:20px; border-radius:12px;
-    padding:8px 16px; font-size:20px; font-weight:700;
-    font-family:'Rajdhani',sans-serif; letter-spacing:2px;
-    opacity:0; transition:opacity 0.1s; pointer-events:none;
+  /* LIKE/DISLIKE индикаторы */
+  .swipe-indicator {
+    position:absolute; top:20px;
+    font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700;
+    letter-spacing:3px; padding:4px 12px; border-radius:8px;
+    opacity:0; transition:opacity 0.1s; z-index:10; pointer-events:none;
   }
-  .overlay-like  { right:20px; border:3px solid var(--green);  color:var(--green);  }
-  .overlay-nope  { left:20px;  border:3px solid var(--pink);   color:var(--pink);   }
+  .indicator-like {
+    right:20px; color:var(--green); border:2px solid var(--green);
+    box-shadow: 0 0 20px rgba(0,255,136,0.5);
+  }
+  .indicator-nope {
+    left:20px; color:var(--pink); border:2px solid var(--pink);
+    box-shadow: 0 0 20px rgba(255,0,110,0.5);
+  }
 
   /* Кнопки действий */
-  .action-btns {
-    display:flex; justify-content:center; gap:16px;
-    padding:10px 16px 14px; flex-shrink:0;
+  .action-buttons {
+    display:flex; justify-content:center; gap:20px;
+    padding:12px 20px 8px;
+    flex-shrink:0;
   }
-  .btn-nope, .btn-like {
-    width:60px; height:60px; border-radius:50%;
+  .action-btn {
+    width:56px; height:56px; border-radius:50%;
     display:flex; align-items:center; justify-content:center;
-    font-size:26px; cursor:pointer; border:none;
-    transition:all 0.2s; position:relative;
+    font-size:22px; cursor:pointer; border:2px solid;
+    transition:all 0.2s; background:transparent;
   }
   .btn-nope {
-    background:rgba(255,0,110,0.1); border:2px solid rgba(255,0,110,0.4);
-    box-shadow:var(--glow-pink);
+    border-color:var(--pink); color:var(--pink);
+    box-shadow: var(--glow-pink);
   }
-  .btn-nope:active  { transform:scale(0.9); background:rgba(255,0,110,0.3); }
+  .btn-nope:active { background:rgba(255,0,110,0.2); transform:scale(0.95); }
   .btn-like {
-    background:rgba(0,255,136,0.1); border:2px solid rgba(0,255,136,0.4);
+    border-color:var(--green); color:var(--green);
     box-shadow: 0 0 20px rgba(0,255,136,0.4);
   }
-  .btn-like:active  { transform:scale(0.9); background:rgba(0,255,136,0.3); }
+  .btn-like:active { background:rgba(0,255,136,0.2); transform:scale(0.95); }
+  .btn-super {
+    width:44px; height:44px; font-size:18px;
+    border-color:var(--cyan); color:var(--cyan);
+    box-shadow: var(--glow-cyan);
+  }
+  .btn-super:active { background:rgba(0,245,255,0.2); transform:scale(0.95); }
 
-  /* Empty / Loading */
+  /* Пусто */
   .empty-state {
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    flex:1; gap:12px; padding:20px;
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:12px;
+    padding:20px;
   }
-  .empty-icon { font-size:60px; }
-  .empty-title { font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700; color:var(--cyan); }
-  .empty-text  { font-size:14px; color:var(--text2); text-align:center; line-height:1.5; }
-  .reload-btn  {
-    padding:10px 24px; border-radius:30px; font-size:14px; cursor:pointer;
-    background:linear-gradient(135deg,var(--cyan),var(--purple));
-    color:#000; font-weight:700; border:none; font-family:'Rajdhani',sans-serif;
-    letter-spacing:1px; margin-top:8px;
+  .empty-icon { font-size:64px; }
+  .empty-title {
+    font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700;
+    color:var(--cyan); letter-spacing:2px; text-transform:uppercase;
   }
+  .empty-text { color:var(--text2); font-size:14px; text-align:center; line-height:1.5; }
 
-  /* Likes counter */
-  .likes-counter {
-    position:absolute; bottom:80px; right:16px;
-    font-size:11px; color:var(--text2);
+  /* Загрузка */
+  .loading-state {
+    flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:12px;
+  }
+  .loading-icon { font-size:40px; animation:spin 1s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loading-text { color:var(--text2); font-size:14px; }
+
+  /* ФИЛЬТРЫ */
+  .filter-panel {
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.8); backdrop-filter:blur(10px);
+    z-index:100; display:none; align-items:flex-end;
+  }
+  .filter-panel.open { display:flex; }
+  .filter-content {
+    width:100%; max-width:480px; margin:0 auto;
+    background:var(--bg2); border-top:1px solid var(--border);
+    border-radius:20px 20px 0 0; padding:20px 16px 40px;
+  }
+  .filter-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:20px;
+  }
+  .filter-title {
+    font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700;
+    color:var(--cyan); letter-spacing:2px; text-transform:uppercase;
+  }
+  .filter-close {
+    font-size:20px; cursor:pointer; color:var(--text2);
+    background:none; border:none; padding:4px 8px;
+  }
+  .filter-group { margin-bottom:16px; }
+  .filter-group-label {
+    font-size:12px; color:var(--text2); letter-spacing:1px;
+    text-transform:uppercase; margin-bottom:8px;
     font-family:'Rajdhani',sans-serif;
   }
-
-  /* ===== FILTERS PANEL ===== */
-  #filters-panel {
-    position:absolute; top:0; left:0; right:0; bottom:0;
-    background:rgba(10,10,15,0.97); backdrop-filter:blur(20px);
-    z-index:100; display:none; flex-direction:column;
-    padding:0 16px 20px;
-    border-top:1px solid rgba(0,245,255,0.1);
+  .filter-options { display:flex; flex-wrap:wrap; gap:8px; }
+  .filter-option {
+    font-size:12px; padding:6px 14px;
+    border:1px solid var(--border); border-radius:20px;
+    color:var(--text2); cursor:pointer;
+    background:transparent; transition:all 0.2s;
+    font-family:'Exo 2',sans-serif;
   }
-  #filters-panel.open { display:flex; }
-
-  .filters-header {
-    padding:14px 0 12px;
-    display:flex; align-items:center; justify-content:space-between;
-    border-bottom:1px solid var(--border);
-  }
-  .filters-title { font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700; color:var(--cyan); letter-spacing:1px; }
-  .filters-close { font-size:20px; cursor:pointer; color:var(--text2); padding:4px 8px; }
-  .filter-section { margin-top:16px; }
-  .filter-label { font-size:12px; color:var(--text2); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; font-family:'Rajdhani',sans-serif; }
-  .chips { display:flex; flex-wrap:wrap; gap:8px; }
-  .chip {
-    padding:6px 14px; border-radius:20px; font-size:12px; cursor:pointer;
-    border:1px solid var(--border); color:var(--text2);
-    background:rgba(30,30,58,0.5); transition:all 0.2s;
-    font-family:'Rajdhani',sans-serif; font-weight:600; letter-spacing:0.5px;
-  }
-  .chip.active {
+  .filter-option.selected {
     border-color:var(--cyan); color:var(--cyan);
     background:rgba(0,245,255,0.1); box-shadow:var(--glow-cyan);
   }
-  .apply-btn {
-    margin-top:24px; padding:12px; border-radius:12px;
-    background:linear-gradient(135deg,var(--cyan),var(--purple));
-    color:#000; font-weight:700; font-size:14px; cursor:pointer;
-    border:none; font-family:'Rajdhani',sans-serif; letter-spacing:1px;
-    width:100%;
-  }
-
-  /* ===== MATCH MODAL ===== */
-  .match-modal {
-    display:none; position:fixed; top:0; left:0; right:0; bottom:0;
-    background:rgba(0,0,0,0.85); backdrop-filter:blur(10px);
-    z-index:200; align-items:center; justify-content:center; padding:20px;
-  }
-  .match-modal.open { display:flex; }
-  .match-modal-inner {
-    background:var(--card); border:1px solid rgba(0,245,255,0.3);
-    border-radius:20px; padding:28px 24px;
-    max-width:380px; width:100%;
-    box-shadow:0 0 40px rgba(0,245,255,0.2), 0 0 80px rgba(123,47,255,0.15);
-    text-align:center; position:relative;
-  }
-  .match-emoji { font-size:50px; margin-bottom:12px; animation:matchPop 0.5s ease; }
-  @keyframes matchPop {
-    0%   { transform:scale(0); opacity:0; }
-    70%  { transform:scale(1.2); }
-    100% { transform:scale(1); opacity:1; }
-  }
-  .match-title {
-    font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700;
-    background:linear-gradient(90deg,var(--cyan),var(--purple));
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    margin-bottom:6px;
-  }
-  .match-subtitle { font-size:14px; color:var(--text2); margin-bottom:20px; }
-  .match-user-info {
-    background:rgba(0,245,255,0.05); border:1px solid rgba(0,245,255,0.1);
-    border-radius:12px; padding:14px; margin-bottom:16px; text-align:left;
-  }
-  .match-user-name { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; color:#fff; }
-  .match-user-meta { font-size:13px; color:var(--text2); margin-top:2px; }
-  .match-btns { display:flex; gap:10px; flex-direction:column; }
-
-  /* ── ИСПРАВЛЕНИЕ: кнопка "Написать" — полноценная ссылка ── */
-  .btn-write {
-    display:block; width:100%;
-    padding:13px; border-radius:12px;
-    background:linear-gradient(135deg,var(--cyan),var(--purple));
-    color:#000; font-weight:700; font-size:15px;
-    font-family:'Rajdhani',sans-serif; letter-spacing:1px;
-    cursor:pointer; border:none; text-align:center;
-    text-decoration:none;
-  }
-  .btn-write:active { opacity:0.85; }
-
-  .btn-continue {
-    padding:12px; border-radius:12px;
-    background:transparent; border:1px solid var(--border);
-    color:var(--text2); font-size:14px; cursor:pointer;
-    font-family:'Rajdhani',sans-serif;
-  }
-  .btn-continue:active { background:rgba(255,255,255,0.05); }
 
   /* ===== MATCHES SCREEN ===== */
-  #screen-matches { overflow-y:auto; }
-
   .matches-header {
-    padding:16px 16px 12px; flex-shrink:0;
-    border-bottom:1px solid var(--border);
+    padding:16px 16px 8px;
+    font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700;
+    color:var(--text2); letter-spacing:2px; text-transform:uppercase;
+    flex-shrink:0;
   }
-  .matches-title {
-    font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700;
-    color:var(--cyan); letter-spacing:1px;
+  .matches-list {
+    flex:1; overflow-y:auto; padding:0 12px 12px;
   }
-
   .match-card {
-    display:flex; gap:12px; padding:14px 16px;
-    border-bottom:1px solid rgba(30,30,58,0.6);
-    align-items:flex-start;
+    display:flex; align-items:center; gap:12px;
+    padding:12px; border-radius:12px;
+    background:var(--card); border:1px solid var(--border);
+    margin-bottom:8px; cursor:pointer; transition:all 0.2s;
   }
+  .match-card:active { background:rgba(0,245,255,0.05); }
   .match-avatar {
-    width:56px; height:56px; border-radius:12px; object-fit:cover; flex-shrink:0;
-    border:2px solid rgba(0,245,255,0.2);
+    width:52px; height:52px; border-radius:50%; object-fit:cover;
+    border:2px solid var(--purple); flex-shrink:0;
   }
   .match-avatar-placeholder {
-    width:56px; height:56px; border-radius:12px; flex-shrink:0;
-    background:linear-gradient(135deg,#1a1a2e,#16213e);
+    width:52px; height:52px; border-radius:50%;
+    background:linear-gradient(135deg, var(--purple), var(--pink));
     display:flex; align-items:center; justify-content:center;
-    font-size:24px; border:2px solid rgba(0,245,255,0.2);
+    font-size:22px; flex-shrink:0;
+    border:2px solid var(--purple);
   }
   .match-info { flex:1; min-width:0; }
   .match-name {
     font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700;
-    color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
-  .match-meta { font-size:12px; color:var(--text2); margin-top:2px; }
-  .match-games { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
-  .match-game-tag {
-    font-size:11px; padding:2px 7px; border-radius:20px;
-    border:1px solid rgba(123,47,255,0.3); background:rgba(123,47,255,0.07);
-    color:var(--purple); font-family:'Rajdhani',sans-serif; font-weight:600;
-  }
-
-  /* ── ИСПРАВЛЕНИЕ: кнопка написать в карточке матча ── */
+  .match-games { font-size:11px; color:var(--text2); margin-top:2px; }
   .match-write-btn {
-    display:inline-block;
-    margin-top:8px; padding:7px 14px; border-radius:20px;
-    background:rgba(0,245,255,0.1); border:1px solid rgba(0,245,255,0.3);
-    color:var(--cyan); font-size:12px; font-family:'Rajdhani',sans-serif;
-    font-weight:700; letter-spacing:0.5px; cursor:pointer;
-    text-decoration:none; transition:all 0.2s;
+    font-size:11px; padding:6px 12px;
+    border:1px solid var(--cyan); border-radius:20px;
+    color:var(--cyan); cursor:pointer;
+    background:rgba(0,245,255,0.08); white-space:nowrap;
+    transition:all 0.2s; flex-shrink:0;
+    font-family:'Exo 2',sans-serif;
   }
   .match-write-btn:active { background:rgba(0,245,255,0.2); }
 
-  .matches-empty {
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    flex:1; gap:12px; padding:40px 20px; text-align:center;
+  /* ===== MATCH MODAL ===== */
+  .match-modal {
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.9); backdrop-filter:blur(20px);
+    z-index:200; display:none; align-items:center; justify-content:center;
+    padding:20px;
   }
+  .match-modal.open { display:flex; }
+  .match-modal-content {
+    text-align:center; max-width:320px; width:100%;
+  }
+  .match-modal-title {
+    font-family:'Rajdhani',sans-serif; font-size:32px; font-weight:700;
+    letter-spacing:4px; text-transform:uppercase;
+    background:linear-gradient(90deg, var(--pink), var(--purple), var(--cyan));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    margin-bottom:8px;
+    animation:matchPulse 0.5s ease;
+  }
+  @keyframes matchPulse {
+    0% { transform:scale(0.5); opacity:0; }
+    70% { transform:scale(1.1); }
+    100% { transform:scale(1); opacity:1; }
+  }
+  .match-modal-sub {
+    color:var(--text2); font-size:14px; margin-bottom:24px;
+  }
+  .match-avatars {
+    display:flex; justify-content:center; align-items:center;
+    gap:0; margin-bottom:28px;
+  }
+  .match-avatar-big {
+    width:80px; height:80px; border-radius:50%; object-fit:cover;
+    border:3px solid var(--purple);
+  }
+  .match-avatar-big-placeholder {
+    width:80px; height:80px; border-radius:50%;
+    background:linear-gradient(135deg, var(--purple), var(--pink));
+    display:flex; align-items:center; justify-content:center;
+    font-size:36px; border:3px solid var(--purple);
+  }
+  .match-hearts { font-size:24px; margin:0 8px; }
+  .match-modal-btn {
+    width:100%; padding:14px; border-radius:12px;
+    font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:700;
+    letter-spacing:2px; text-transform:uppercase; cursor:pointer;
+    border:none; margin-bottom:10px; transition:all 0.2s;
+  }
+  .btn-write {
+    background:linear-gradient(90deg, var(--purple), var(--cyan));
+    color:#000;
+    box-shadow: 0 0 20px rgba(0,245,255,0.3);
+  }
+  .btn-write:active { transform:scale(0.98); opacity:0.9; }
+  .btn-continue {
+    background:transparent; color:var(--text2);
+    border:1px solid var(--border) !important;
+  }
+  .btn-continue:active { background:rgba(255,255,255,0.05); }
 
   /* ===== PREMIUM SCREEN ===== */
-  .premium-hero {
-    text-align:center; padding:20px 0 24px;
-    border-bottom:1px solid var(--border); margin-bottom:20px;
+  .premium-header {
+    text-align:center; margin-bottom:24px; padding-top:10px;
   }
-  .premium-icon { font-size:56px; margin-bottom:8px; }
+  .premium-icon { font-size:48px; margin-bottom:8px; display:block; }
   .premium-title {
-    font-family:'Rajdhani',sans-serif; font-size:24px; font-weight:700; letter-spacing:2px;
-    background:linear-gradient(90deg,var(--yellow),var(--pink));
+    font-family:'Rajdhani',sans-serif; font-size:26px; font-weight:700;
+    letter-spacing:3px; text-transform:uppercase;
+    background:linear-gradient(90deg, var(--yellow), var(--pink));
     -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    margin-bottom:6px;
   }
-  .premium-sub { font-size:14px; color:var(--text2); margin-top:4px; }
-  .premium-features { display:flex; flex-direction:column; gap:12px; margin-bottom:24px; }
+  .premium-sub { color:var(--text2); font-size:13px; }
+  .premium-features { display:flex; flex-direction:column; gap:12px; margin-bottom:28px; }
   .premium-feature {
-    display:flex; align-items:flex-start; gap:12px;
+    display:flex; align-items:flex-start; gap:14px;
     padding:14px; border-radius:12px;
-    background:rgba(30,30,58,0.4); border:1px solid var(--border);
+    background:var(--card); border:1px solid var(--border);
   }
-  .feature-icon { font-size:24px; flex-shrink:0; margin-top:2px; }
-  .feature-title { font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:700; color:#fff; }
-  .feature-desc  { font-size:12px; color:var(--text2); margin-top:2px; }
-  .premium-cta {
-    position:sticky; bottom:0; padding:16px;
-    background:linear-gradient(to top, var(--bg) 80%, transparent);
-    margin:0 -16px -20px;
+  .feature-icon { font-size:24px; flex-shrink:0; }
+  .feature-title {
+    font-family:'Rajdhani',sans-serif; font-size:16px; font-weight:600;
+    color:var(--text); margin-bottom:2px;
   }
-  .premium-buy-btn {
-    width:100%; padding:15px; border-radius:14px;
-    background:linear-gradient(135deg,var(--yellow),var(--pink));
-    color:#000; font-weight:800; font-size:16px; cursor:pointer;
-    border:none; font-family:'Rajdhani',sans-serif; letter-spacing:1px;
-    box-shadow:0 4px 20px rgba(255,214,0,0.3); transition:all 0.2s;
+  .feature-desc { font-size:12px; color:var(--text2); line-height:1.4; }
+  .premium-btn {
+    width:100%; padding:16px; border-radius:12px;
+    background:linear-gradient(90deg, var(--yellow), var(--pink));
+    color:#000; font-family:'Rajdhani',sans-serif;
+    font-size:18px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+    border:none; cursor:pointer; transition:all 0.2s;
+    box-shadow: 0 0 30px rgba(255,214,0,0.3);
   }
-  .premium-buy-btn:active { transform:scale(0.98); opacity:0.9; }
-  .premium-price {
-    display:flex; flex-direction:column; align-items:center;
-  }
-  .premium-price-main { font-size:18px; font-weight:800; }
-  .premium-price-sub  { font-size:11px; opacity:0.7; margin-top:1px; }
-
-  /* Toast */
-  .toast {
-    position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-80px);
-    background:rgba(30,30,58,0.95); backdrop-filter:blur(10px);
-    border:1px solid rgba(0,245,255,0.3); border-radius:12px;
-    padding:10px 20px; font-size:14px; color:var(--text);
-    font-family:'Rajdhani',sans-serif; font-weight:600; letter-spacing:0.5px;
-    z-index:500; transition:transform 0.3s ease; white-space:nowrap;
-  }
-  .toast.show { transform:translateX(-50%) translateY(0); }
+  .premium-btn:active { transform:scale(0.98); opacity:0.9; }
+  .premium-price { text-align:center; color:var(--text2); font-size:12px; margin-top:10px; }
 </style>
 </head>
 <body>
 <div id="app">
-
   <!-- HEADER -->
   <div class="header">
     <div class="header-logo">⚡ TeammateFind</div>
     <div id="header-right">
-      <span class="header-badge" id="status-badge">FREE</span>
+      <span class="header-badge" id="badge-free">FREE</span>
     </div>
   </div>
 
   <!-- SWIPE SCREEN -->
-  <div id="screen-swipe" class="screen active">
+  <div class="screen active" id="screen-swipe">
     <div class="swipe-header">
-      <span class="swipe-title">🎮 Найти тиммейта</span>
+      <div class="swipe-title">🎮 Найти тиммейта</div>
       <button class="filter-btn" onclick="openFilters()">⚙ Фильтры</button>
     </div>
 
     <div class="cards-container" id="cards-container">
-      <div class="empty-state">
-        <div class="empty-icon">⌛</div>
-        <div class="empty-title">Загрузка...</div>
+      <div class="loading-state" id="loading-state">
+        <div class="loading-icon">⌛</div>
+        <div class="loading-text">Загрузка...</div>
       </div>
     </div>
 
-    <div class="action-btns">
-      <button class="btn-nope" onclick="swipeAction('left')" title="Пропустить">👎</button>
-      <button class="btn-like" onclick="swipeAction('right')" title="Лайк">❤️</button>
-    </div>
-
-    <!-- Фильтры -->
-    <div id="filters-panel">
-      <div class="filters-header">
-        <span class="filters-title">⚙ Фильтры</span>
-        <span class="filters-close" onclick="closeFilters()">✕</span>
-      </div>
-      <div class="filter-section">
-        <div class="filter-label">Игра</div>
-        <div class="chips" id="game-filter-chips">
-          <div class="chip active" data-value="all"              onclick="setFilter('game',this)">Все</div>
-          <div class="chip"        data-value="dota2"            onclick="setFilter('game',this)">🎮 Dota 2</div>
-          <div class="chip"        data-value="cs2"              onclick="setFilter('game',this)">🔫 CS2</div>
-          <div class="chip"        data-value="valorant"         onclick="setFilter('game',this)">⚡ Valorant</div>
-          <div class="chip"        data-value="lol"              onclick="setFilter('game',this)">⚔️ LoL</div>
-          <div class="chip"        data-value="pubg"             onclick="setFilter('game',this)">🪖 PUBG</div>
-          <div class="chip"        data-value="mobile_legends"   onclick="setFilter('game',this)">📱 ML</div>
-        </div>
-      </div>
-      <div class="filter-section">
-        <div class="filter-label">Ищу</div>
-        <div class="chips" id="seek-filter-chips">
-          <div class="chip active" data-value="any"    onclick="setFilter('seek',this)">Всех</div>
-          <div class="chip"        data-value="male"   onclick="setFilter('seek',this)">👦 Парней</div>
-          <div class="chip"        data-value="female" onclick="setFilter('seek',this)">👧 Девушек</div>
-        </div>
-      </div>
-      <button class="apply-btn" onclick="applyFilters()">Применить фильтры</button>
+    <div class="action-buttons" id="action-buttons" style="display:none">
+      <button class="action-btn btn-nope" onclick="swipeLeft()">✕</button>
+      <button class="action-btn btn-super" onclick="swipeSuper()">⭐</button>
+      <button class="action-btn btn-like" onclick="swipeRight()">♥</button>
     </div>
   </div>
 
   <!-- MATCHES SCREEN -->
-  <div id="screen-matches" class="screen">
-    <div class="matches-header">
-      <div class="matches-title">❤️ Мои матчи</div>
-    </div>
-    <div id="matches-list">
-      <div class="matches-empty">
-        <div class="empty-icon">⌛</div>
-        <div class="empty-title" style="color:var(--cyan)">Загрузка...</div>
+  <div class="screen" id="screen-matches">
+    <div class="matches-header">❤️ Мои матчи</div>
+    <div class="matches-list" id="matches-list">
+      <div class="loading-state">
+        <div class="loading-icon">⌛</div>
+        <div class="loading-text">Загрузка...</div>
       </div>
     </div>
   </div>
 
   <!-- PREMIUM SCREEN -->
-  <div id="screen-premium" class="screen">
-    <div class="premium-hero">
-      <div class="premium-icon">💎</div>
+  <div class="screen" id="screen-premium">
+    <div class="premium-header">
+      <span class="premium-icon">💎</span>
       <div class="premium-title">TEAMMATE PREMIUM</div>
       <div class="premium-sub">Прокачай свой поиск тиммейта</div>
     </div>
     <div class="premium-features">
       <div class="premium-feature">
-        <div class="feature-icon">♾️</div>
+        <span class="feature-icon">♾️</span>
         <div>
           <div class="feature-title">Безлимитные лайки</div>
           <div class="feature-desc">Бесплатно: только 10 лайков в день</div>
         </div>
       </div>
       <div class="premium-feature">
-        <div class="feature-icon">👀</div>
+        <span class="feature-icon">👀</span>
         <div>
           <div class="feature-title">Кто тебя лайкнул</div>
           <div class="feature-desc">Видишь всех кто лайкнул твою анкету</div>
         </div>
       </div>
       <div class="premium-feature">
-        <div class="feature-icon">🔔</div>
+        <span class="feature-icon">🔔</span>
         <div>
           <div class="feature-title">Уведомления с именем</div>
           <div class="feature-desc">Узнаёшь кто именно тебя лайкнул</div>
         </div>
       </div>
       <div class="premium-feature">
-        <div class="feature-icon">🚀</div>
+        <span class="feature-icon">🚀</span>
         <div>
           <div class="feature-title">Буст анкеты</div>
           <div class="feature-desc">Твоя анкета показывается первой</div>
         </div>
       </div>
       <div class="premium-feature">
-        <div class="feature-icon">💎</div>
+        <span class="feature-icon">💎</span>
         <div>
           <div class="feature-title">Значок Premium</div>
           <div class="feature-desc">Выделяйся среди других игроков</div>
         </div>
       </div>
     </div>
-    <div class="premium-cta">
-      <button class="premium-buy-btn" onclick="buyPremium()">
-        <div class="premium-price">
-          <span class="premium-price-main">250 ⭐ в месяц</span>
-          <span class="premium-price-sub">~250 рублей · отменить можно в любой момент</span>
-        </div>
-      </button>
-    </div>
+    <button class="premium-btn" onclick="buyPremium()">💎 ПОЛУЧИТЬ PREMIUM</button>
+    <div class="premium-price">250 ⭐ Telegram Stars / 30 дней</div>
   </div>
 
   <!-- BOTTOM NAV -->
   <div class="bottom-nav">
-    <button class="nav-btn active" id="nav-swipe"   onclick="showScreen('swipe')">
-      <span class="nav-icon">🎮</span><span class="nav-label">Свайп</span>
+    <button class="nav-btn active" id="nav-swipe" onclick="showScreen('swipe')">
+      <span class="nav-icon">🎮</span>
+      <span class="nav-label">Свайп</span>
     </button>
-    <button class="nav-btn" id="nav-matches"         onclick="showScreen('matches')">
-      <span class="nav-icon">❤️</span><span class="nav-label">Матчи</span>
+    <button class="nav-btn" id="nav-matches" onclick="showScreen('matches')">
+      <span class="nav-icon">❤️</span>
+      <span class="nav-label">Матчи</span>
     </button>
-    <button class="nav-btn" id="nav-premium"         onclick="showScreen('premium')">
-      <span class="nav-icon">💎</span><span class="nav-label">Premium</span>
+    <button class="nav-btn" id="nav-premium" onclick="showScreen('premium')">
+      <span class="nav-icon">💎</span>
+      <span class="nav-label">Premium</span>
     </button>
   </div>
+</div>
 
-</div><!-- #app -->
-
-<!-- MATCH MODAL -->
-<div class="match-modal" id="match-modal">
-  <div class="match-modal-inner">
-    <div class="match-emoji">🎉</div>
-    <div class="match-title">ЭТО МАТЧ!</div>
-    <div class="match-subtitle">Вы оба лайкнули друг друга</div>
-    <div class="match-user-info">
-      <div class="match-user-name" id="modal-name">—</div>
-      <div class="match-user-meta" id="modal-meta">—</div>
+<!-- FILTER PANEL -->
+<div class="filter-panel" id="filter-panel" onclick="closeFiltersOutside(event)">
+  <div class="filter-content">
+    <div class="filter-header">
+      <div class="filter-title">⚙ Фильтры</div>
+      <button class="filter-close" onclick="closeFilters()">✕</button>
     </div>
-    <div class="match-btns">
-      <!--
-        btn-write — это <a> или <button> c onclick.
-        Используем onclick + openUserChat() чтобы корректно
-        открыть чат через Telegram WebApp API.
-      -->
-      <button class="btn-write" id="modal-write-btn" onclick="openMatchChat()">
-        ✍️ Написать
-      </button>
-      <button class="btn-continue" onclick="closeMatchModal()">
-        Продолжить свайп
-      </button>
+    <div class="filter-group">
+      <div class="filter-group-label">Игра</div>
+      <div class="filter-options" id="filter-games">
+        <button class="filter-option selected" onclick="selectFilter('game','all',this)">Все</button>
+        <button class="filter-option" onclick="selectFilter('game','dota2',this)">🎮 Dota 2</button>
+        <button class="filter-option" onclick="selectFilter('game','cs2',this)">🔫 CS2</button>
+        <button class="filter-option" onclick="selectFilter('game','valorant',this)">⚡ Valorant</button>
+        <button class="filter-option" onclick="selectFilter('game','lol',this)">⚔️ LoL</button>
+        <button class="filter-option" onclick="selectFilter('game','pubg',this)">🪖 PUBG</button>
+        <button class="filter-option" onclick="selectFilter('game','mobile_legends',this)">📱 ML</button>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="filter-group-label">Ищу</div>
+      <div class="filter-options" id="filter-seek">
+        <button class="filter-option selected" onclick="selectFilter('seek','all',this)">Всех</button>
+        <button class="filter-option" onclick="selectFilter('seek','male',this)">👦 Парней</button>
+        <button class="filter-option" onclick="selectFilter('seek','female',this)">👧 Девушек</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
+<!-- MATCH MODAL -->
+<div class="match-modal" id="match-modal">
+  <div class="match-modal-content">
+    <div class="match-modal-title">💫 МАТЧ!</div>
+    <div class="match-modal-sub" id="match-modal-sub">Вы понравились друг другу!</div>
+    <div class="match-avatars">
+      <div class="match-avatar-big-placeholder" id="match-my-avatar">🎮</div>
+      <div class="match-hearts">💗</div>
+      <div id="match-their-avatar-wrap">
+        <div class="match-avatar-big-placeholder" id="match-their-avatar-placeholder">🎮</div>
+      </div>
+    </div>
+    <button class="match-modal-btn btn-write" onclick="writeToMatch()">✉️ НАПИСАТЬ</button>
+    <button class="match-modal-btn btn-continue" onclick="closeMatchModal()">Продолжить свайп</button>
+  </div>
+</div>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
-  // ─────────────────────── Инициализация ───────────────────────
-  const tg = window.Telegram?.WebApp;
-  if (tg) {
-    tg.ready();
-    tg.expand();
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+
+  // ====== СОСТОЯНИЕ ======
+  const API = '';  // пустой = относительный путь к серверу
+  let userId = null;
+  let currentProfiles = [];
+  let currentIndex = 0;
+  let currentFilter = { game: 'all', seek: 'all' };
+  let matchedUser = null;   // ← хранит данные пользователя с которым матч
+
+  // ====== ИНИЦИАЛИЗАЦИЯ ======
+  async function init() {
+    const tgUser = tg.initDataUnsafe?.user;
+    if (tgUser) {
+      userId = tgUser.id;
+    } else {
+      // dev fallback
+      userId = 123456;
+    }
+
+    // Проверяем премиум
+    try {
+      const r = await fetch(`${API}/api/check_user?user_id=${userId}`);
+      const data = await r.json();
+      if (data.is_premium) {
+        document.getElementById('badge-free').outerHTML =
+          '<span class="premium-badge">💎</span>';
+      }
+    } catch(e) {}
+
+    loadProfiles();
+    loadMatches();
   }
 
-  const API_BASE = '';  // относительные URL — сервер отдаёт и API и статику
-
-  // Получаем user_id из URL-параметров (бот подставляет ?user_id=...)
-  const params = new URLSearchParams(window.location.search);
-  let USER_ID  = parseInt(params.get('user_id') || '0', 10);
-
-  // Если открыто через Telegram initData — пробуем достать оттуда
-  if (!USER_ID && tg?.initDataUnsafe?.user?.id) {
-    USER_ID = tg.initDataUnsafe.user.id;
-  }
-
-  const GAMES_META = {
-    dota2:          { name:'Dota 2',          emoji:'🎮' },
-    cs2:            { name:'CS2',              emoji:'🔫' },
-    valorant:       { name:'Valorant',         emoji:'⚡' },
-    mobile_legends: { name:'Mobile Legends',   emoji:'📱' },
-    pubg:           { name:'PUBG',             emoji:'🪖' },
-    lol:            { name:'LoL',              emoji:'⚔️' },
-  };
-
-  // Состояние
-  let profiles       = [];
-  let currentIndex   = 0;
-  let activeGame     = 'all';
-  let activeSeek     = 'any';
-  let isAnimating    = false;
-
-  // Данные текущего матча для модалки
-  let matchedUserData = null;
-
-  // ─────────────────────── Навигация ───────────────────────
+  // ====== НАВИГАЦИЯ ======
   function showScreen(name) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(`screen-${name}`).classList.add('active');
-    document.getElementById(`nav-${name}`).classList.add('active');
+    document.getElementById('screen-' + name).classList.add('active');
+    document.getElementById('nav-' + name).classList.add('active');
 
     if (name === 'matches') loadMatches();
   }
 
-  // ─────────────────────── Toast ───────────────────────
-  function showToast(msg, duration = 2500) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), duration);
+  // ====== ФИЛЬТРЫ ======
+  function openFilters() {
+    document.getElementById('filter-panel').classList.add('open');
+  }
+  function closeFilters() {
+    document.getElementById('filter-panel').classList.remove('open');
+    loadProfiles();
+  }
+  function closeFiltersOutside(e) {
+    if (e.target === document.getElementById('filter-panel')) closeFilters();
+  }
+  function selectFilter(type, value, el) {
+    currentFilter[type] = value;
+    const group = type === 'game' ? 'filter-games' : 'filter-seek';
+    document.querySelectorAll(`#${group} .filter-option`).forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
   }
 
-  // ─────────────────────── Открыть чат с пользователем ───────────────────────
-  /**
-   * Универсальная функция открытия чата.
-   * Telegram WebApp должен использовать tg.openTelegramLink() для t.me ссылок
-   * и tg.openLink() для внешних. Для tg:// URI — window.location.
-   */
-  function openChatUrl(username, userId) {
-    let url;
-    if (username) {
-      url = `https://t.me/${username}`;
-    } else {
-      // Если username нет — открываем через tg://
-      url = `tg://user?id=${userId}`;
-    }
-
-    if (tg && username) {
-      // openTelegramLink открывает t.me ссылки внутри Telegram
-      tg.openTelegramLink(url);
-    } else if (tg && !username) {
-      // tg:// URI нельзя открыть через WebApp API напрямую —
-      // используем openLink который перенаправит в нативный обработчик
-      tg.openLink(url);
-    } else {
-      window.open(url, '_blank');
-    }
-  }
-
-  // ─────────────────────── Match Modal ───────────────────────
-  function openMatchModal(user) {
-    matchedUserData = user;
-
-    document.getElementById('modal-name').textContent = user.name;
-    const gender = user.gender === 'male' ? '👦' : user.gender === 'female' ? '👧' : '🎮';
-    document.getElementById('modal-meta').textContent =
-      `${user.age} лет · ${gender}${user.bio ? ' · ' + user.bio.slice(0, 60) : ''}`;
-
-    document.getElementById('match-modal').classList.add('open');
-  }
-
-  function closeMatchModal() {
-    document.getElementById('match-modal').classList.remove('open');
-    matchedUserData = null;
-  }
-
-  // Вызывается кнопкой "Написать" в модалке матча
-  function openMatchChat() {
-    if (!matchedUserData) return;
-    openChatUrl(matchedUserData.username, matchedUserData.id);
-  }
-
-  // ─────────────────────── Profiles / Swipe ───────────────────────
+  // ====== ЗАГРУЗКА ПРОФИЛЕЙ ======
   async function loadProfiles() {
-    if (!USER_ID) {
-      renderEmpty('❓', 'Нет user_id', 'Открой приложение через бота');
-      return;
-    }
-    renderLoading();
-    try {
-      const r = await fetch(
-        `${API_BASE}/api/profiles?user_id=${USER_ID}&game=${activeGame}&seek=${activeSeek}&limit=20`
-      );
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      profiles     = await r.json();
-      currentIndex = 0;
-      renderCurrentCard();
-    } catch (e) {
-      console.error('loadProfiles error:', e);
-      renderEmpty('⚠️', 'Ошибка загрузки', 'Попробуй обновить');
-    }
-  }
-
-  function renderLoading() {
-    document.getElementById('cards-container').innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">⌛</div>
-        <div class="empty-title">Загрузка...</div>
-      </div>`;
-  }
-
-  function renderEmpty(icon, title, text) {
-    document.getElementById('cards-container').innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">${icon}</div>
-        <div class="empty-title">${title}</div>
-        <div class="empty-text">${text}</div>
-        <button class="reload-btn" onclick="loadProfiles()">🔄 Обновить</button>
-      </div>`;
-  }
-
-  function renderCurrentCard() {
     const container = document.getElementById('cards-container');
-    if (currentIndex >= profiles.length) {
-      renderEmpty('🎮', 'Анкеты закончились', 'Возвращайся позже или измени фильтры');
-      return;
+    const actionBtns = document.getElementById('action-buttons');
+    container.innerHTML = `<div class="loading-state"><div class="loading-icon">⌛</div><div class="loading-text">Загрузка...</div></div>`;
+    actionBtns.style.display = 'none';
+
+    try {
+      const params = new URLSearchParams({
+        user_id: userId,
+        game: currentFilter.game,
+        seek: currentFilter.seek
+      });
+      const r = await fetch(`${API}/api/profiles?${params}`);
+      const data = await r.json();
+      currentProfiles = data.profiles || [];
+      currentIndex = 0;
+
+      if (currentProfiles.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🎮</div>
+            <div class="empty-title">Никого нет</div>
+            <div class="empty-text">Попробуй изменить фильтры или зайди позже</div>
+          </div>`;
+        return;
+      }
+
+      renderCards();
+      actionBtns.style.display = 'flex';
+    } catch(e) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">⚠️</div>
+          <div class="empty-title">Ошибка</div>
+          <div class="empty-text">Не удалось загрузить анкеты</div>
+        </div>`;
     }
-    const u = profiles[currentIndex];
-    container.innerHTML = buildCardHTML(u);
-    initSwipe(container.querySelector('.card'), u);
   }
 
-  function buildCardHTML(u) {
-    const genderLabel = u.gender === 'male' ? '👦 Парень' : u.gender === 'female' ? '👧 Девушка' : '🌈';
-    const games = (u.games || []).map(g => {
-      const meta = GAMES_META[g.game] || { emoji:'🎮', name:g.game };
-      return `<span class="game-tag">${meta.emoji} ${meta.name}${g.rank ? ' · '+g.rank : ''}</span>`;
-    }).join('');
+  function renderCards() {
+    const container = document.getElementById('cards-container');
+    container.innerHTML = '';
 
-    const premiumBadge = u.is_premium ? `<div class="card-premium-badge">💎 Premium</div>` : '';
-    const likedBadge   = u.liked_me   ? `<div class="card-liked-badge">❤️ Лайкнул тебя</div>` : '';
+    // Рендерим текущую + следующую карточку (для визуального стека)
+    for (let i = Math.min(currentIndex + 1, currentProfiles.length - 1); i >= currentIndex; i--) {
+      if (i < currentProfiles.length) {
+        const card = createCard(currentProfiles[i], i === currentIndex);
+        container.appendChild(card);
+      }
+    }
 
-    const photoHTML = u.avatar_file_id
-      ? `<img class="card-photo" src="/api/photo/${u.avatar_file_id}" alt="" onerror="this.outerHTML='<div class=card-no-photo>🎮</div>'">`
-      : `<div class="card-no-photo">🎮</div>`;
+    if (currentIndex < currentProfiles.length) {
+      initSwipe(container.querySelector('.card[data-active="true"]'));
+    }
+  }
 
-    return `
-      <div class="card" data-id="${u.id}">
-        ${photoHTML}
-        ${premiumBadge}
-        ${likedBadge}
-        <div class="swipe-overlay overlay-like">ЛАЙК ❤️</div>
-        <div class="swipe-overlay overlay-nope">ПРОПУСК 👎</div>
-        <div class="card-info">
-          <div class="card-name">${escHtml(u.name)}</div>
-          <div class="card-age-gender">${u.age} лет · ${genderLabel}</div>
-          <div class="card-games">${games}</div>
-          ${u.bio ? `<div class="card-bio">${escHtml(u.bio)}</div>` : ''}
+  function createCard(profile, isActive) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.active = isActive;
+    card.style.zIndex = isActive ? 2 : 1;
+    if (!isActive) {
+      card.style.transform = 'scale(0.95) translateY(10px)';
+    }
+
+    const gamesHtml = (profile.games || []).map(g =>
+      `<span class="game-tag">${g}</span>`
+    ).join('');
+
+    const premiumIcon = profile.is_premium ? '<span class="card-premium-icon">💎</span>' : '';
+
+    const photoHtml = profile.photo_url
+      ? `<img class="card-photo" src="${profile.photo_url}" alt="" onerror="this.style.display='none'">`
+      : `<div class="card-photo-placeholder">🎮</div>`;
+
+    card.innerHTML = `
+      <div class="swipe-indicator indicator-like">ЛАЙК ❤️</div>
+      <div class="swipe-indicator indicator-nope">НOPE ✕</div>
+      ${photoHtml}
+      <div class="card-info">
+        <div class="card-name-row">
+          <span class="card-name">${escHtml(profile.name)}</span>
+          <span class="card-age">${profile.age} лет</span>
+          ${premiumIcon}
         </div>
-      </div>`;
+        <div class="card-games">${gamesHtml}</div>
+        ${profile.bio ? `<div class="card-bio">${escHtml(profile.bio)}</div>` : ''}
+      </div>
+    `;
+    return card;
   }
 
-  function escHtml(s) {
-    return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // ─────────────────────── Swipe Touch/Mouse ───────────────────────
-  function initSwipe(card, userData) {
+  // ====== СВАЙП ======
+  function initSwipe(card) {
     if (!card) return;
-    let startX = 0, startY = 0, curX = 0, isDragging = false;
+    let startX, startY, currentX = 0, isDragging = false;
 
-    const onStart = (x, y) => {
-      if (isAnimating) return;
-      startX = x; startY = y; curX = 0;
+    const onStart = (e) => {
+      startX = (e.touches ? e.touches[0].clientX : e.clientX);
+      startY = (e.touches ? e.touches[0].clientY : e.clientY);
       isDragging = true;
       card.classList.add('swiping');
     };
-    const onMove = (x) => {
+    const onMove = (e) => {
       if (!isDragging) return;
-      curX = x - startX;
-      const rot  = curX * 0.08;
-      card.style.transform = `translateX(${curX}px) rotate(${rot}deg)`;
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - startX;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - startY;
+      currentX = x;
+      const rotate = x * 0.08;
+      card.style.transform = `translateX(${x}px) translateY(${y * 0.3}px) rotate(${rotate}deg)`;
 
-      const likeEl = card.querySelector('.overlay-like');
-      const nopeEl = card.querySelector('.overlay-nope');
-      const ratio  = Math.abs(curX) / 80;
-      if (curX > 20) {
-        likeEl.style.opacity = Math.min(ratio, 1);
-        nopeEl.style.opacity = 0;
-      } else if (curX < -20) {
-        nopeEl.style.opacity = Math.min(ratio, 1);
-        likeEl.style.opacity = 0;
+      const likeInd = card.querySelector('.indicator-like');
+      const nopeInd = card.querySelector('.indicator-nope');
+      if (x > 40) {
+        likeInd.style.opacity = Math.min((x - 40) / 60, 1);
+        nopeInd.style.opacity = 0;
+      } else if (x < -40) {
+        nopeInd.style.opacity = Math.min((-x - 40) / 60, 1);
+        likeInd.style.opacity = 0;
       } else {
-        likeEl.style.opacity = 0;
-        nopeEl.style.opacity = 0;
+        likeInd.style.opacity = 0;
+        nopeInd.style.opacity = 0;
       }
     };
     const onEnd = () => {
       if (!isDragging) return;
       isDragging = false;
       card.classList.remove('swiping');
-      if (Math.abs(curX) > 80) {
-        finishSwipe(card, userData, curX > 0 ? 'right' : 'left');
+
+      if (currentX > 80) {
+        doLike();
+      } else if (currentX < -80) {
+        doDislike();
       } else {
         card.style.transform = '';
-        card.querySelector('.overlay-like').style.opacity = 0;
-        card.querySelector('.overlay-nope').style.opacity = 0;
+        card.querySelector('.indicator-like').style.opacity = 0;
+        card.querySelector('.indicator-nope').style.opacity = 0;
       }
+      currentX = 0;
     };
 
-    // Touch
-    card.addEventListener('touchstart', e => onStart(e.touches[0].clientX, e.touches[0].clientY), { passive:true });
-    card.addEventListener('touchmove',  e => onMove(e.touches[0].clientX),  { passive:true });
-    card.addEventListener('touchend',   onEnd);
-
-    // Mouse
-    card.addEventListener('mousedown',  e => onStart(e.clientX, e.clientY));
-    document.addEventListener('mousemove', e => { if (isDragging) onMove(e.clientX); });
-    document.addEventListener('mouseup',   onEnd);
+    card.addEventListener('touchstart', onStart, { passive: true });
+    card.addEventListener('touchmove', onMove, { passive: true });
+    card.addEventListener('touchend', onEnd);
+    card.addEventListener('mousedown', onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
   }
 
-  function swipeAction(dir) {
-    const container = document.getElementById('cards-container');
-    const card = container.querySelector('.card');
-    if (!card || isAnimating) return;
-    const u = profiles[currentIndex];
-    finishSwipe(card, u, dir);
-  }
+  function swipeRight() { doLike(); }
+  function swipeLeft()  { doDislike(); }
+  function swipeSuper() { doLike(true); }
 
-  async function finishSwipe(card, userData, dir) {
-    if (isAnimating) return;
-    isAnimating = true;
+  async function doLike(isSuper = false) {
+    if (currentIndex >= currentProfiles.length) return;
+    const profile = currentProfiles[currentIndex];
+    const card = document.querySelector('.card[data-active="true"]');
 
-    card.classList.add(dir === 'right' ? 'fly-right' : 'fly-left');
-
-    if (dir === 'right') {
-      // Лайк
-      try {
-        const r = await fetch(`${API_BASE}/api/like`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ from_id: USER_ID, to_id: userData.id }),
-        });
-        const data = await r.json();
-        if (data.matched) {
-          // Открываем модалку матча с данными пользователя
-          setTimeout(() => openMatchModal(userData), 300);
-        } else if (data.duplicate) {
-          showToast('Уже лайкнул!');
-        } else {
-          showToast('❤️ Лайк отправлен!');
-        }
-      } catch (e) {
-        console.error('like error:', e);
-        showToast('Ошибка сети');
-      }
-    } else {
-      showToast('👎 Пропущено');
-    }
-
-    setTimeout(() => {
-      currentIndex++;
-      isAnimating = false;
-      renderCurrentCard();
-    }, 400);
-  }
-
-  // ─────────────────────── Filters ───────────────────────
-  function openFilters() {
-    document.getElementById('filters-panel').classList.add('open');
-  }
-  function closeFilters() {
-    document.getElementById('filters-panel').classList.remove('open');
-  }
-  function setFilter(type, el) {
-    const group = type === 'game' ? 'game-filter-chips' : 'seek-filter-chips';
-    document.querySelectorAll(`#${group} .chip`).forEach(c => c.classList.remove('active'));
-    el.classList.add('active');
-    if (type === 'game') activeGame = el.dataset.value;
-    else                 activeSeek = el.dataset.value;
-  }
-  function applyFilters() {
-    closeFilters();
-    loadProfiles();
-  }
-
-  // ─────────────────────── Matches ───────────────────────
-  async function loadMatches() {
-    const list = document.getElementById('matches-list');
-    list.innerHTML = `
-      <div class="matches-empty">
-        <div class="empty-icon">⌛</div>
-        <div class="empty-title" style="color:var(--cyan)">Загрузка...</div>
-      </div>`;
-
-    if (!USER_ID) {
-      list.innerHTML = `<div class="matches-empty"><div class="empty-icon">❓</div><div class="empty-title" style="color:var(--cyan)">Нет user_id</div></div>`;
-      return;
+    if (card) {
+      card.classList.add('fly-right');
     }
 
     try {
-      const r = await fetch(`${API_BASE}/api/matches?user_id=${USER_ID}`);
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const matches = await r.json();
+      const r = await fetch(`${API}/api/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from_user: userId,
+          to_user: profile.user_id,
+          is_super: isSuper
+        })
+      });
+      const data = await r.json();
 
-      if (!matches.length) {
+      if (data.match) {
+        // ← сохраняем данные о matched пользователе
+        matchedUser = profile;
+        showMatchModal(profile);
+      }
+    } catch(e) {}
+
+    setTimeout(() => nextCard(), 400);
+  }
+
+  async function doDislike() {
+    if (currentIndex >= currentProfiles.length) return;
+    const card = document.querySelector('.card[data-active="true"]');
+    if (card) card.classList.add('fly-left');
+    setTimeout(() => nextCard(), 400);
+  }
+
+  function nextCard() {
+    currentIndex++;
+    if (currentIndex >= currentProfiles.length) {
+      const container = document.getElementById('cards-container');
+      document.getElementById('action-buttons').style.display = 'none';
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🎮</div>
+          <div class="empty-title">Все просмотрено</div>
+          <div class="empty-text">Загляни позже — появятся новые игроки</div>
+        </div>`;
+    } else {
+      renderCards();
+    }
+  }
+
+  // ====== MATCH MODAL ======
+  function showMatchModal(profile) {
+    const modal = document.getElementById('match-modal');
+    document.getElementById('match-modal-sub').textContent =
+      `Ты и ${profile.name} понравились друг другу!`;
+
+    // Аватар matched пользователя
+    const wrap = document.getElementById('match-their-avatar-wrap');
+    if (profile.photo_url) {
+      wrap.innerHTML = `<img class="match-avatar-big" src="${profile.photo_url}" onerror="this.outerHTML='<div class=\\'match-avatar-big-placeholder\\'>🎮</div>'">`;
+    } else {
+      wrap.innerHTML = `<div class="match-avatar-big-placeholder">🎮</div>`;
+    }
+
+    modal.classList.add('open');
+  }
+
+  function closeMatchModal() {
+    document.getElementById('match-modal').classList.remove('open');
+    matchedUser = null;
+  }
+
+  // ✅ ИСПРАВЛЕННАЯ функция "Написать" в модалке матча
+  function writeToMatch() {
+    if (!matchedUser) return;
+    openChat(matchedUser.username, matchedUser.user_id);
+    closeMatchModal();
+  }
+
+  // ====== МАТЧИ ======
+  async function loadMatches() {
+    const list = document.getElementById('matches-list');
+    list.innerHTML = `<div class="loading-state"><div class="loading-icon">⌛</div><div class="loading-text">Загрузка...</div></div>`;
+
+    try {
+      const r = await fetch(`${API}/api/matches?user_id=${userId}`);
+      const data = await r.json();
+      const matches = data.matches || [];
+
+      if (matches.length === 0) {
         list.innerHTML = `
-          <div class="matches-empty">
+          <div class="empty-state">
             <div class="empty-icon">💔</div>
-            <div class="empty-title" style="color:var(--cyan)">Матчей пока нет</div>
-            <div class="empty-text" style="color:var(--text2)">Лайкай анкеты — когда кто-то ответит взаимностью, матч появится здесь</div>
+            <div class="empty-title">Пока нет матчей</div>
+            <div class="empty-text">Свайпай вправо — найдёшь своего тиммейта!</div>
           </div>`;
         return;
       }
 
-      list.innerHTML = matches.map(m => buildMatchCardHTML(m)).join('');
-    } catch (e) {
-      console.error('loadMatches error:', e);
+      list.innerHTML = matches.map(m => {
+        const avatarHtml = m.photo_url
+          ? `<img class="match-avatar" src="${m.photo_url}" onerror="this.outerHTML='<div class=\\'match-avatar-placeholder\\'>🎮</div>'">`
+          : `<div class="match-avatar-placeholder">🎮</div>`;
+
+        const games = (m.games || []).join(', ') || 'Игры не указаны';
+
+        // ✅ data-атрибуты для username и user_id
+        return `
+          <div class="match-card">
+            ${avatarHtml}
+            <div class="match-info">
+              <div class="match-name">${escHtml(m.name)}</div>
+              <div class="match-games">${escHtml(games)}</div>
+            </div>
+            <button class="match-write-btn"
+              data-username="${escHtml(m.username || '')}"
+              data-userid="${m.user_id}"
+              onclick="handleMatchWrite(this)">✉️ Написать</button>
+          </div>`;
+      }).join('');
+    } catch(e) {
       list.innerHTML = `
-        <div class="matches-empty">
+        <div class="empty-state">
           <div class="empty-icon">⚠️</div>
-          <div class="empty-title" style="color:var(--cyan)">Ошибка загрузки</div>
+          <div class="empty-title">Ошибка</div>
+          <div class="empty-text">Не удалось загрузить матчи</div>
         </div>`;
     }
   }
 
-  function buildMatchCardHTML(m) {
-    const games = (m.games || []).map(g => {
-      const meta = GAMES_META[g.game] || { emoji:'🎮', name:g.game };
-      return `<span class="match-game-tag">${meta.emoji} ${meta.name}</span>`;
-    }).join('');
-
-    const avatarHTML = m.avatar_file_id
-      ? `<img class="match-avatar" src="/api/photo/${m.avatar_file_id}" alt=""
-             onerror="this.outerHTML='<div class=match-avatar-placeholder>🎮</div>'">`
-      : `<div class="match-avatar-placeholder">🎮</div>`;
-
-    const genderLabel = m.gender === 'male' ? '👦' : m.gender === 'female' ? '👧' : '🌈';
-
-    // ИСПРАВЛЕНИЕ: кнопка написать использует data-атрибуты и глобальный обработчик
-    return `
-      <div class="match-card">
-        ${avatarHTML}
-        <div class="match-info">
-          <div class="match-name">${escHtml(m.name)}</div>
-          <div class="match-meta">${m.age} лет · ${genderLabel}</div>
-          <div class="match-games">${games}</div>
-          ${m.bio ? `<div class="match-meta" style="margin-top:4px">${escHtml(m.bio.slice(0,80))}</div>` : ''}
-          <button
-            class="match-write-btn"
-            data-username="${escHtml(m.username || '')}"
-            data-userid="${m.id}"
-            onclick="handleMatchWrite(this)"
-          >✍️ Написать</button>
-        </div>
-      </div>`;
-  }
-
-  /**
-   * ИСПРАВЛЕНИЕ: обработчик кнопки "Написать" в списке матчей.
-   * Читает username/userId из data-атрибутов и открывает чат через openChatUrl().
-   */
+  // ✅ ИСПРАВЛЕННАЯ функция кнопки "Написать" в списке матчей
   function handleMatchWrite(btn) {
-    const username = btn.dataset.username || '';
-    const userId   = parseInt(btn.dataset.userid, 10);
-    openChatUrl(username || null, userId);
+    const username = btn.dataset.username;
+    const userId = btn.dataset.userid;
+    openChat(username, userId);
   }
 
-  // ─────────────────────── Premium ───────────────────────
-  function buyPremium() {
-    // Отправляем событие боту — он откроет invoice
-    if (tg) {
-      tg.sendData(JSON.stringify({ action: 'buy_premium' }));
-    } else {
-      showToast('Открой приложение через Telegram');
-    }
-  }
-
-  // ─────────────────────── Проверка регистрации ───────────────────────
-  async function checkAndInit() {
-    if (!USER_ID) {
-      renderEmpty('👾', 'Открой через бота', 'Нажми кнопку "🎮 Найти тиммейта" в боте');
-      return;
-    }
-    try {
-      const r    = await fetch(`${API_BASE}/api/check_user?user_id=${USER_ID}`);
-      const data = await r.json();
-      if (!data.registered) {
-        renderEmpty('📝', 'Сначала зарегистрируйся', 'Напиши /start боту чтобы создать анкету');
-        return;
+  // ====== УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ОТКРЫТИЯ ЧАТА ======
+  function openChat(username, uid) {
+    if (username && username !== 'null' && username !== 'undefined' && username.trim() !== '') {
+      // Если есть username — открываем через t.me/username
+      const url = `https://t.me/${username}`;
+      if (tg && tg.openTelegramLink) {
+        tg.openTelegramLink(url);
+      } else {
+        window.open(url, '_blank');
       }
-      // Обновляем бейдж если premium (нет прямого эндпоинта — проверяем через профиль)
-      updatePremiumBadge(data);
-    } catch (e) {
-      console.error('checkUser error:', e);
+    } else if (uid) {
+      // Если нет username — открываем через tg://user?id=
+      const url = `tg://user?id=${uid}`;
+      if (tg && tg.openLink) {
+        tg.openLink(url);
+      } else {
+        window.open(url, '_blank');
+      }
     }
-    loadProfiles();
   }
 
-  function updatePremiumBadge(data) {
-    // data.is_premium не возвращается из check_user — оставим как есть
-    // (можно расширить API при необходимости)
+  // ====== PREMIUM ======
+  function buyPremium() {
+    if (tg && tg.openTelegramLink) {
+      tg.openTelegramLink(`https://t.me/dota2ankets_bot?start=premium`);
+    } else {
+      window.open(`https://t.me/dota2ankets_bot?start=premium`, '_blank');
+    }
   }
 
-  // ─────────────────────── Старт ───────────────────────
-  checkAndInit();
+  // ====== СТАРТ ======
+  init();
 </script>
 </body>
 </html>
