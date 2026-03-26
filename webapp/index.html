@@ -1538,7 +1538,7 @@ function showNotRegistered() {
       <div class="not-reg-icon">🎮</div>
       <div class="not-reg-title">Нет анкеты</div>
       <div class="not-reg-text">Зарегистрируйся в боте чтобы<br>искать тиммейтов</div>
-      <button class="not-reg-btn" onclick="tg?.close()">Открыть бота</button>
+      <button class="not-reg-btn" onclick="tg.openTelegramLink('https://t.me/dota2ankets_bot')">Открыть бота</button>
     </div>`;
 }
 
@@ -1841,9 +1841,11 @@ function showMatchModal(profile) {
 
   const writeBtn = document.getElementById('match-write-btn');
   if (profile.username) {
-    writeBtn.href = `https://t.me/${profile.username}`;
+    writeBtn.onclick = () => { tg.openTelegramLink(`https://t.me/${profile.username}`); return false; };
+    writeBtn.href = '#';
   } else {
-    writeBtn.href = `tg://user?id=${profile.id}`;
+    writeBtn.onclick = () => { tg.openTelegramLink(`tg://user?id=${profile.id}`); return false; };
+    writeBtn.href = '#';
   }
 
   overlay.classList.add('open');
@@ -1884,9 +1886,12 @@ async function loadMatches() {
         ? `<img class="match-avatar" src="${API}/api/photo/${m.avatar_file_id}" alt="" onerror="this.outerHTML='<div class=\\'match-avatar-placeholder\\'>👤</div>'">`
         : `<div class="match-avatar-placeholder">👤</div>`;
 
-      const writeUrl = m.username ? `https://t.me/${m.username}` : `tg://user?id=${m.id}`;
+      const writeUrl = m.username ? `https://t.me/${m.username}` : null;
+      const writeBtnOnclick = writeUrl
+        ? `tg.openTelegramLink('${writeUrl}')`
+        : `tg.openTelegramLink('tg://user?id=${m.id}')`;
       const writeBtn = `
-        <a class="match-write-btn" href="${writeUrl}" target="_blank">
+        <a class="match-write-btn" href="#" onclick="${writeBtnOnclick}; return false;">
           <div class="match-write-icon">✍️</div>
         </a>`;
 
@@ -1928,7 +1933,11 @@ async function loadPremiumScreen() {
 }
 
 function buyPremium() {
-  tg.openTelegramLink(`https://t.me/${BOT_USERNAME || 'dota2ankets_bot'}?start=premium`);
+  try {
+    tg.openTelegramLink(`https://t.me/dota2ankets_bot?start=premium`);
+  } catch(e) {
+    window.open(`https://t.me/dota2ankets_bot?start=premium`, '_blank');
+  }
 }
 
 async function loadMyProfile() {
