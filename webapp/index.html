@@ -1953,13 +1953,18 @@ function openMatchChat(userId, username) {
                 window.open(url, '_blank');
             }
         } else {
-            window.location.href = `tg://user?id=${userId}`;
+            const url = `tg://user?id=${userId}`;
+            if (tg && tg.openLink) {
+                tg.openLink(url);
+            } else {
+                window.location.href = url;
+            }
         }
     } catch(e) {
         if (username && username !== 'null' && username !== '') {
             window.open(`https://t.me/${username}`, '_blank');
         } else {
-            window.location.href = `tg://user?id=${userId}`;
+            window.open(`tg://user?id=${userId}`, '_blank');
         }
     }
 }
