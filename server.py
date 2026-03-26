@@ -168,7 +168,7 @@ async def send_liked_notification(pool: asyncpg.Pool, liker: dict,
                     "inline_keyboard": [[{
                         "text": "💎 Узнать кто (Premium)",
                         # deep-link открывает бота и запускает /start premium
-                        "url": f"https://t.me/your_bot_username?start=premium",
+                        "url": "https://t.me/dota2ankets_bot?start=premium",
                     }]]
                 },
             })
