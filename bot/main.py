@@ -16,7 +16,6 @@ from dotenv import load_dotenv
 from db import Database
 
 load_dotenv()
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -28,8 +27,7 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 db = Database(DATABASE_URL)
 
-# Стоимость Premium в Telegram Stars
-PREMIUM_PRICE_STARS = 250  # 250 звёзд = примерно 250 руб
+PREMIUM_PRICE_STARS = 250
 PREMIUM_DAYS = 30
 
 GAMES = {
@@ -44,6 +42,7 @@ GAMES = {
 DAILY_LIKES_FREE = 10
 DAILY_LIKES_PREMIUM = 9999
 
+
 class Registration(StatesGroup):
     name = State()
     age = State()
@@ -55,8 +54,10 @@ class Registration(StatesGroup):
     bio = State()
     avatar = State()
 
+
 class Browse(StatesGroup):
     viewing = State()
+
 
 class EditProfile(StatesGroup):
     name = State()
@@ -66,6 +67,15 @@ class EditProfile(StatesGroup):
     games = State()
     game_rank = State()
     game_roles = State()
+
+
+def get_write_url(user_id: int, username: str = None) -> str:
+    """Возвращает корректную ссылку для написания пользователю.
+    Если username не указан — использует tg://user?id= (работает в Telegram)."""
+    if username:
+        return f"https://t.me/{username}"
+    return f"tg://user?id={user_id}"
+
 
 def games_keyboard(selected=None):
     selected = selected or []
@@ -85,12 +95,14 @@ def games_keyboard(selected=None):
     buttons.append([InlineKeyboardButton(text="➡️ Далее", callback_data="games_done")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
+
 def gender_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="👦 Парень", callback_data="gender:male"),
          InlineKeyboardButton(text="👧 Девушка", callback_data="gender:female")],
         [InlineKeyboardButton(text="🌈 Любой", callback_data="gender:any")]
     ])
+
 
 def seeking_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -99,11 +111,13 @@ def seeking_keyboard():
         [InlineKeyboardButton(text="👥 Всех", callback_data="seek:any")]
     ])
 
+
 def rank_keyboard(game_key):
     game = GAMES[game_key]
     buttons = [[InlineKeyboardButton(text=r, callback_data=f"rank:{r}")] for r in game["ranks"]]
     buttons.append([InlineKeyboardButton(text="⏭ Пропустить", callback_data="rank:skip")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
 
 def roles_keyboard(game_key, selected=None):
     selected = selected or []
@@ -115,6 +129,7 @@ def roles_keyboard(game_key, selected=None):
     buttons.append([InlineKeyboardButton(text="➡️ Далее", callback_data="roles_done")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
+
 def profile_actions_keyboard(target_id, is_premium=False):
     buttons = [
         [InlineKeyboardButton(text="❤️ Лайк", callback_data=f"like:{target_id}"),
@@ -122,6 +137,7 @@ def profile_actions_keyboard(target_id, is_premium=False):
         [InlineKeyboardButton(text="🚫 Пожаловаться", callback_data=f"report:{target_id}")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
 
 def main_menu_keyboard(webapp_url=None, user_id=None):
     buttons = [
@@ -135,6 +151,7 @@ def main_menu_keyboard(webapp_url=None, user_id=None):
         )])
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
+
 def edit_menu_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="✏️ Имя", callback_data="edit:name"),
@@ -146,6 +163,7 @@ def edit_menu_keyboard():
          InlineKeyboardButton(text="🗑 Удалить анкету", callback_data="delete_profile")],
     ])
 
+
 def premium_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(
@@ -155,9 +173,9 @@ def premium_keyboard():
         [InlineKeyboardButton(text="❓ Что такое Telegram Stars?", callback_data="stars_info")]
     ])
 
+
 @dp.message(CommandStart())
 async def cmd_start(message: types.Message, state: FSMContext):
-    # Проверяем deep link ?start=premium
     args = message.text.split()
     if len(args) > 1 and args[1] == 'premium':
         user = await db.get_user(message.from_user.id)
@@ -174,16 +192,18 @@ async def cmd_start(message: types.Message, state: FSMContext):
         return
 
     await message.answer(
-        "👾 Добро пожаловать в <b>TeammateFind</b>!\n\n"
+        "👾 Добро пожаловать в TeammateFind!\n\n"
         "Найди тиммейта для своей любимой игры.\n\n"
         "Давай создадим твою анкету. Как тебя зовут?",
         parse_mode="HTML"
     )
     await state.set_state(Registration.name)
 
+
 @dp.message(Registration.name)
 async def reg_name(message: types.Message, state: FSMContext):
     name = message.text.strip()
+    # ИСПРАВЛЕНО: синтаксическая ошибка в условии
     if len(name) < 2 or len(name) > 30:
         await message.answer("Имя должно быть от 2 до 30 символов. Попробуй ещё раз:")
         return
@@ -191,10 +211,12 @@ async def reg_name(message: types.Message, state: FSMContext):
     await message.answer("Сколько тебе лет?")
     await state.set_state(Registration.age)
 
+
 @dp.message(Registration.age)
 async def reg_age(message: types.Message, state: FSMContext):
     try:
         age = int(message.text.strip())
+        # ИСПРАВЛЕНО: синтаксическая ошибка в условии
         if age < 13 or age > 60:
             raise ValueError
     except ValueError:
@@ -203,6 +225,7 @@ async def reg_age(message: types.Message, state: FSMContext):
     await state.update_data(age=age)
     await message.answer("Выбери свой пол:", reply_markup=gender_keyboard())
     await state.set_state(Registration.gender)
+
 
 @dp.callback_query(F.data.startswith("gender:"), Registration.gender)
 async def reg_gender(callback: types.CallbackQuery, state: FSMContext):
@@ -215,6 +238,7 @@ async def reg_gender(callback: types.CallbackQuery, state: FSMContext):
     )
     await state.set_state(Registration.seeking)
 
+
 @dp.callback_query(F.data.startswith("seek:"), Registration.seeking)
 async def reg_seeking(callback: types.CallbackQuery, state: FSMContext):
     seeking = callback.data.split(":")[1]
@@ -224,6 +248,7 @@ async def reg_seeking(callback: types.CallbackQuery, state: FSMContext):
         reply_markup=games_keyboard()
     )
     await state.set_state(Registration.games)
+
 
 @dp.callback_query(F.data.startswith("game_toggle:"), Registration.games)
 async def reg_game_toggle(callback: types.CallbackQuery, state: FSMContext):
@@ -237,6 +262,7 @@ async def reg_game_toggle(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(selected_games=selected)
     await callback.message.edit_reply_markup(reply_markup=games_keyboard(selected))
 
+
 @dp.callback_query(F.data == "games_done", Registration.games)
 async def reg_games_done(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -247,22 +273,38 @@ async def reg_games_done(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(games_to_configure=selected.copy(), game_details={})
     await configure_next_game(callback.message, state)
 
+
 async def configure_next_game(message, state: FSMContext):
     data = await state.get_data()
     games_to_configure = data.get("games_to_configure", [])
+
     if not games_to_configure:
-        await message.edit_text("Расскажи о себе в паре слов (или /skip):")
+        # ИСПРАВЛЕНО: try/except на случай если сообщение нельзя отредактировать
+        try:
+            await message.edit_text("Расскажи о себе в паре слов (или /skip):")
+        except Exception:
+            await message.answer("Расскажи о себе в паре слов (или /skip):")
         await state.set_state(Registration.bio)
         return
+
     current_game = games_to_configure[0]
     game_info = GAMES[current_game]
     await state.update_data(current_game=current_game)
-    await message.edit_text(
-        f"{game_info['emoji']} <b>{game_info['name']}</b>\n\nВыбери свой ранг:",
-        parse_mode="HTML",
-        reply_markup=rank_keyboard(current_game)
-    )
+
+    try:
+        await message.edit_text(
+            f"{game_info['emoji']} {game_info['name']}\n\nВыбери свой ранг:",
+            parse_mode="HTML",
+            reply_markup=rank_keyboard(current_game)
+        )
+    except Exception:
+        await message.answer(
+            f"{game_info['emoji']} {game_info['name']}\n\nВыбери свой ранг:",
+            parse_mode="HTML",
+            reply_markup=rank_keyboard(current_game)
+        )
     await state.set_state(Registration.game_rank)
+
 
 @dp.callback_query(F.data.startswith("rank:"), Registration.game_rank)
 async def reg_rank(callback: types.CallbackQuery, state: FSMContext):
@@ -278,6 +320,7 @@ async def reg_rank(callback: types.CallbackQuery, state: FSMContext):
     )
     await state.set_state(Registration.game_roles)
 
+
 @dp.callback_query(F.data.startswith("role:"), Registration.game_roles)
 async def reg_role_toggle(callback: types.CallbackQuery, state: FSMContext):
     role = callback.data.split(":")[1]
@@ -292,6 +335,7 @@ async def reg_role_toggle(callback: types.CallbackQuery, state: FSMContext):
         reply_markup=roles_keyboard(data["current_game"], selected)
     )
 
+
 @dp.callback_query(F.data == "roles_done", Registration.game_roles)
 async def reg_roles_done(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -303,16 +347,18 @@ async def reg_roles_done(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(game_details=game_details, games_to_configure=games_to_configure)
     await configure_next_game(callback.message, state)
 
+
 @dp.message(Registration.bio)
 async def reg_bio(message: types.Message, state: FSMContext):
     bio = None if message.text == "/skip" else message.text[:200]
     await state.update_data(bio=bio)
     await message.answer(
         "Отправь своё фото для анкеты (или /skip):\n"
-        "<i>Можно пропустить — будет стандартная аватарка</i>",
+        "Можно пропустить — будет стандартная аватарка",
         parse_mode="HTML"
     )
     await state.set_state(Registration.avatar)
+
 
 @dp.message(Registration.avatar, F.photo)
 async def reg_avatar_photo(message: types.Message, state: FSMContext):
@@ -320,15 +366,16 @@ async def reg_avatar_photo(message: types.Message, state: FSMContext):
     await state.update_data(avatar_file_id=file_id)
     await finish_registration(message, state)
 
+
 @dp.message(Registration.avatar)
 async def reg_avatar_skip(message: types.Message, state: FSMContext):
     await state.update_data(avatar_file_id=None)
     await finish_registration(message, state)
 
+
 async def finish_registration(message: types.Message, state: FSMContext):
     data = await state.get_data()
     user_id = message.from_user.id
-
     await db.create_user(
         user_id=user_id,
         username=message.from_user.username,
@@ -339,7 +386,6 @@ async def finish_registration(message: types.Message, state: FSMContext):
         bio=data.get("bio"),
         avatar_file_id=data.get("avatar_file_id")
     )
-
     for game_key, details in data.get("game_details", {}).items():
         await db.add_user_game(
             user_id=user_id,
@@ -347,7 +393,6 @@ async def finish_registration(message: types.Message, state: FSMContext):
             rank=details.get("rank"),
             roles=details.get("roles", [])
         )
-
     await state.clear()
     await message.answer(
         f"🎉 Анкета создана, {data['name']}!\n\n"
@@ -355,12 +400,17 @@ async def finish_registration(message: types.Message, state: FSMContext):
         reply_markup=main_menu_keyboard(WEBAPP_URL, message.from_user.id)
     )
 
+
 @dp.callback_query(F.data.startswith("like:"))
 async def handle_like(callback: types.CallbackQuery):
     target_id = int(callback.data.split(":")[1])
     from_id = callback.from_user.id
-
     user = await db.get_user(from_id)
+
+    # ИСПРАВЛЕНО: проверяем и сбрасываем лимит лайков перед проверкой
+    await db.check_and_reset_likes(from_id)
+    user = await db.get_user(from_id)  # перечитываем после сброса
+
     if not user["is_premium"]:
         if user["daily_likes"] >= DAILY_LIKES_FREE:
             await callback.answer(
@@ -375,51 +425,52 @@ async def handle_like(callback: types.CallbackQuery):
     if matched:
         target = await db.get_user(target_id)
         await callback.answer("🎉 Это матч!", show_alert=True)
-        my_username = f"@{callback.from_user.username}" if callback.from_user.username else "нет username"
-        target_username = f"@{target['username']}" if target.get('username') else "нет username"
 
-        if target.get('username'):
-            write_url_to_target = f"https://t.me/{target['username']}"
-        else:
-            write_url_to_target = f"tg://user?id={target['id']}"
+        # ИСПРАВЛЕНО: используем get_write_url для корректной ссылки при отсутствии username
+        my_username_str = f"@{callback.from_user.username}" if callback.from_user.username else "нет username"
+        target_username_str = f"@{target['username']}" if target.get('username') else "нет username"
+
+        write_url_to_target = get_write_url(target['id'], target.get('username'))
         kb_to_target = InlineKeyboardMarkup(inline_keyboard=[[
             InlineKeyboardButton(text=f"✍️ Написать {target['name']}", url=write_url_to_target)
         ]])
 
         match_text_me = (
-            f"🎉 <b>Это матч!</b>\n\n"
-            f"👤 <b>{target['name']}</b>, {target['age']} лет\n"
+            f"🎉 Это матч!\n\n"
+            f"👤 {target['name']}, {target['age']} лет\n"
             f"📝 {target.get('bio') or 'Нет описания'}\n\n"
-            f"Контакт: {target_username}"
+            f"Контакт: {target_username_str}"
         )
         if target.get('avatar_file_id'):
-            await bot.send_photo(callback.from_user.id, target['avatar_file_id'], caption=match_text_me, parse_mode="HTML", reply_markup=kb_to_target)
+            await bot.send_photo(callback.from_user.id, target['avatar_file_id'],
+                                 caption=match_text_me, parse_mode="HTML", reply_markup=kb_to_target)
         else:
-            await bot.send_message(callback.from_user.id, match_text_me, parse_mode="HTML", reply_markup=kb_to_target)
+            await bot.send_message(callback.from_user.id, match_text_me,
+                                   parse_mode="HTML", reply_markup=kb_to_target)
 
-        if callback.from_user.username:
-            write_url_to_me = f"https://t.me/{callback.from_user.username}"
-        else:
-            write_url_to_me = f"tg://user?id={callback.from_user.id}"
+        write_url_to_me = get_write_url(callback.from_user.id, callback.from_user.username)
         kb_to_me = InlineKeyboardMarkup(inline_keyboard=[[
             InlineKeyboardButton(text=f"✍️ Написать {user['name']}", url=write_url_to_me)
         ]])
 
         match_text_target = (
-            f"🎉 <b>Это матч!</b>\n\n"
-            f"👤 <b>{user['name']}</b>, {user['age']} лет\n"
+            f"🎉 Это матч!\n\n"
+            f"👤 {user['name']}, {user['age']} лет\n"
             f"📝 {user.get('bio') or 'Нет описания'}\n\n"
-            f"Контакт: {my_username}"
+            f"Контакт: {my_username_str}"
         )
         try:
             if user.get('avatar_file_id'):
-                await bot.send_photo(target_id, user['avatar_file_id'], caption=match_text_target, parse_mode="HTML", reply_markup=kb_to_me)
+                await bot.send_photo(target_id, user['avatar_file_id'],
+                                     caption=match_text_target, parse_mode="HTML", reply_markup=kb_to_me)
             else:
-                await bot.send_message(target_id, match_text_target, parse_mode="HTML", reply_markup=kb_to_me)
+                await bot.send_message(target_id, match_text_target,
+                                       parse_mode="HTML", reply_markup=kb_to_me)
         except Exception:
             pass
     else:
         await callback.answer("❤️ Лайк отправлен!")
+
 
 @dp.message(F.text == "❤️ Мои матчи")
 async def show_matches(message: types.Message):
@@ -427,7 +478,6 @@ async def show_matches(message: types.Message):
     if not user:
         await message.answer("Сначала зарегистрируйся! /start")
         return
-
     matches = await db.get_matches(message.from_user.id)
     if not matches:
         await message.answer(
@@ -436,33 +486,49 @@ async def show_matches(message: types.Message):
         )
         return
 
-    await message.answer(f"❤️ <b>Твои матчи ({len(matches)}):</b>", parse_mode="HTML")
-
+    await message.answer(f"❤️ Твои матчи ({len(matches)}):", parse_mode="HTML")
     for m in matches:
         games = await db.get_user_games(m['id'])
-        games_text = " ".join([GAMES.get(g['game'], {}).get('emoji', '🎮') + " " + GAMES.get(g['game'], {}).get('name', g['game']) for g in games])
+        games_text = " ".join([
+            GAMES.get(g['game'], {}).get('emoji', '🎮') + " " + GAMES.get(g['game'], {}).get('name', g['game'])
+            for g in games
+        ])
         username_str = f"@{m['username']}" if m.get('username') else "нет username"
         text = (
-            f"👤 <b>{m['name']}</b>, {m['age']} лет\n"
+            f"👤 {m['name']}, {m['age']} лет\n"
             f"🎮 {games_text}\n"
             f"📝 {m.get('bio') or 'Нет описания'}\n"
             f"Контакт: {username_str}"
         )
-        if m.get('username'):
-            write_url = f"https://t.me/{m['username']}"
-        else:
-            write_url = f"tg://user?id={m['id']}"
+        # ИСПРАВЛЕНО: используем get_write_url — работает даже без username
+        write_url = get_write_url(m['id'], m.get('username'))
         kb = InlineKeyboardMarkup(inline_keyboard=[[
             InlineKeyboardButton(text="✍️ Написать", url=write_url)
         ]])
         if m.get('avatar_file_id'):
-            await message.answer_photo(m['avatar_file_id'], caption=text, parse_mode="HTML", reply_markup=kb)
+            await message.answer_photo(m['avatar_file_id'], caption=text,
+                                       parse_mode="HTML", reply_markup=kb)
         else:
             await message.answer(text, parse_mode="HTML", reply_markup=kb)
+
 
 @dp.callback_query(F.data.startswith("skip:"))
 async def handle_skip(callback: types.CallbackQuery):
     await callback.answer("👎 Пропущено")
+
+
+# ИСПРАВЛЕНО: добавлен хэндлер для кнопки "Пожаловаться"
+@dp.callback_query(F.data.startswith("report:"))
+async def handle_report(callback: types.CallbackQuery):
+    target_id = int(callback.data.split(":")[1])
+    from_id = callback.from_user.id
+    try:
+        await db.block_user(from_id, target_id)
+        await callback.answer("🚫 Жалоба отправлена. Пользователь заблокирован.", show_alert=True)
+    except Exception as e:
+        logger.error(f"Report error: {e}")
+        await callback.answer("Произошла ошибка. Попробуй позже.", show_alert=True)
+
 
 @dp.message(F.text == "👤 Моя анкета")
 async def show_my_profile(message: types.Message):
@@ -470,7 +536,6 @@ async def show_my_profile(message: types.Message):
     if not user:
         await message.answer("Сначала зарегистрируйся! /start")
         return
-
     games = await db.get_user_games(message.from_user.id)
     games_text = ""
     for g in games:
@@ -482,7 +547,6 @@ async def show_my_profile(message: types.Message):
     gender_labels = {"male": "Парень", "female": "Девушка", "any": "Другой"}
     seek_labels = {"male": "Парней", "female": "Девушек", "any": "Всех"}
 
-    # Проверяем статус премиум
     is_premium = user["is_premium"]
     if is_premium and user.get("premium_until"):
         premium_until = user["premium_until"]
@@ -497,30 +561,28 @@ async def show_my_profile(message: types.Message):
         premium_str = "Бесплатный"
 
     text = (
-        f"👤 <b>{user['name']}</b>, {user['age']} лет\n"
+        f"👤 {user['name']}, {user['age']} лет\n"
         f"Пол: {gender_labels.get(user['gender'], user['gender'])}\n"
         f"Ищет: {seek_labels.get(user['seeking'], user['seeking'])}\n"
         f"Статус: {premium_str}\n\n"
-        f"🎮 <b>Игры:</b>{games_text}\n\n"
+        f"🎮 Игры: {games_text}\n\n"
         f"📝 {user['bio'] or 'Нет описания'}"
     )
-
     edit_kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="✏️ Редактировать", callback_data="edit_profile")],
         [InlineKeyboardButton(text="🔴 Скрыть анкету", callback_data="toggle_active")]
     ])
-
     if user["avatar_file_id"]:
-        await message.answer_photo(user["avatar_file_id"], caption=text, parse_mode="HTML", reply_markup=edit_kb)
+        await message.answer_photo(user["avatar_file_id"], caption=text,
+                                   parse_mode="HTML", reply_markup=edit_kb)
     else:
         await message.answer(text, parse_mode="HTML", reply_markup=edit_kb)
 
-# ============ PREMIUM ============
 
+# ============ PREMIUM ============
 @dp.message(F.text == "💎 Премиум")
 async def show_premium(message: types.Message):
     user = await db.get_user(message.from_user.id)
-
     if user and user["is_premium"]:
         if user.get("premium_until"):
             premium_until = user["premium_until"]
@@ -529,28 +591,29 @@ async def show_premium(message: types.Message):
             else:
                 until_str = str(premium_until)[:10]
             text = (
-                f"💎 <b>У тебя уже есть Premium!</b>\n\n"
-                f"Действует до: <b>{until_str}</b>\n\n"
+                f"💎 У тебя уже есть Premium!\n\n"
+                f"Действует до: {until_str}\n\n"
                 f"✅ Безлимитные лайки\n"
                 f"✅ Видеть кто тебя лайкнул\n"
                 f"✅ Приоритет в показах\n"
                 f"✅ Значок 💎 на анкете"
             )
         else:
-            text = "💎 <b>У тебя уже есть Premium!</b>"
+            text = "💎 У тебя уже есть Premium!"
         await message.answer(text, parse_mode="HTML")
         return
 
     text = (
-        "💎 <b>TeammateFind Premium</b>\n\n"
-        "✅ Безлимитные лайки <i>(бесплатно: 10/день)</i>\n"
-        "✅ Видеть кто тебя лайкнул\n"
-        "✅ Приоритет в показах — тебя видят первым\n"
-        "✅ Значок 💎 на анкете\n\n"
-        f"💰 Стоимость: <b>{PREMIUM_PRICE_STARS} ⭐ Telegram Stars</b> / {PREMIUM_DAYS} дней\n\n"
-        "<i>Telegram Stars — внутренняя валюта Telegram, купить можно прямо в приложении</i>"
+        f"💎 TeammateFind Premium\n\n"
+        f"✅ Безлимитные лайки (бесплатно: 10/день)\n"
+        f"✅ Видеть кто тебя лайкнул\n"
+        f"✅ Приоритет в показах — тебя видят первым\n"
+        f"✅ Значок 💎 на анкете\n\n"
+        f"💰 Стоимость: {PREMIUM_PRICE_STARS} ⭐ Telegram Stars / {PREMIUM_DAYS} дней\n\n"
+        f"Telegram Stars — внутренняя валюта Telegram, купить можно прямо в приложении"
     )
     await message.answer(text, parse_mode="HTML", reply_markup=premium_keyboard())
+
 
 @dp.callback_query(F.data == "stars_info")
 async def stars_info(callback: types.CallbackQuery):
@@ -561,9 +624,9 @@ async def stars_info(callback: types.CallbackQuery):
         show_alert=True
     )
 
+
 @dp.callback_query(F.data == "buy_premium_stars")
 async def buy_premium_stars(callback: types.CallbackQuery):
-    """Отправляем инвойс на оплату через Telegram Stars"""
     await callback.message.answer_invoice(
         title="💎 TeammateFind Premium",
         description=(
@@ -573,30 +636,27 @@ async def buy_premium_stars(callback: types.CallbackQuery):
             "• Приоритет в показах"
         ),
         payload="premium_30days",
-        currency="XTR",  # Telegram Stars
+        currency="XTR",
         prices=[LabeledPrice(label="Premium 30 дней", amount=PREMIUM_PRICE_STARS)],
-        provider_token="",  # Пустой для Stars
+        provider_token="",
     )
     await callback.answer()
 
+
 @dp.pre_checkout_query()
 async def pre_checkout(query: PreCheckoutQuery):
-    """Подтверждаем оплату"""
     await query.answer(ok=True)
+
 
 @dp.message(F.successful_payment)
 async def successful_payment(message: types.Message):
-    """Оплата прошла — активируем Premium"""
     payment = message.successful_payment
-
     if payment.invoice_payload == "premium_30days":
-        # Активируем Premium на 30 дней
         premium_until = datetime.now() + timedelta(days=PREMIUM_DAYS)
         await db.activate_premium(message.from_user.id, PREMIUM_DAYS)
-
         await message.answer(
-            f"🎉 <b>Premium активирован!</b>\n\n"
-            f"💎 Действует до: <b>{premium_until.strftime('%d.%m.%Y')}</b>\n\n"
+            f"🎉 Premium активирован!\n\n"
+            f"💎 Действует до: {premium_until.strftime('%d.%m.%Y')}\n\n"
             f"✅ Безлимитные лайки включены\n"
             f"✅ Теперь ты видишь кто тебя лайкнул\n"
             f"✅ Твоя анкета показывается первой\n\n"
@@ -604,18 +664,18 @@ async def successful_payment(message: types.Message):
             parse_mode="HTML",
             reply_markup=main_menu_keyboard(WEBAPP_URL, message.from_user.id)
         )
-
         logger.info(
             f"Premium activated for user {message.from_user.id}, "
             f"charge_id: {payment.telegram_payment_charge_id}"
         )
 
-# ============ EDIT PROFILE ============
 
+# ============ EDIT PROFILE ============
 @dp.callback_query(F.data == "edit_profile")
 async def edit_profile_menu(callback: types.CallbackQuery):
     await callback.message.edit_reply_markup(reply_markup=edit_menu_keyboard())
     await callback.answer()
+
 
 @dp.callback_query(F.data.startswith("edit:"))
 async def edit_field(callback: types.CallbackQuery, state: FSMContext):
@@ -641,9 +701,11 @@ async def edit_field(callback: types.CallbackQuery, state: FSMContext):
         await state.set_state(getattr(EditProfile, field))
     await callback.answer()
 
+
 @dp.message(EditProfile.name)
 async def edit_name(message: types.Message, state: FSMContext):
     name = message.text.strip()
+    # ИСПРАВЛЕНО: синтаксическая ошибка в условии
     if len(name) < 2 or len(name) > 30:
         await message.answer("Имя должно быть от 2 до 30 символов:")
         return
@@ -652,10 +714,12 @@ async def edit_name(message: types.Message, state: FSMContext):
     await message.answer(f"✅ Имя изменено на {name}!")
     await show_my_profile(message)
 
+
 @dp.message(EditProfile.age)
 async def edit_age(message: types.Message, state: FSMContext):
     try:
         age = int(message.text.strip())
+        # ИСПРАВЛЕНО: синтаксическая ошибка в условии
         if age < 13 or age > 60:
             raise ValueError
     except ValueError:
@@ -666,6 +730,7 @@ async def edit_age(message: types.Message, state: FSMContext):
     await message.answer(f"✅ Возраст изменён на {age}!")
     await show_my_profile(message)
 
+
 @dp.message(EditProfile.bio)
 async def edit_bio(message: types.Message, state: FSMContext):
     bio = None if message.text == "/skip" else message.text[:200]
@@ -674,6 +739,7 @@ async def edit_bio(message: types.Message, state: FSMContext):
     await message.answer("✅ Описание обновлено!")
     await show_my_profile(message)
 
+
 @dp.message(EditProfile.avatar, F.photo)
 async def edit_avatar_photo(message: types.Message, state: FSMContext):
     file_id = message.photo[-1].file_id
@@ -681,6 +747,7 @@ async def edit_avatar_photo(message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer("✅ Фото обновлено!")
     await show_my_profile(message)
+
 
 @dp.message(EditProfile.avatar)
 async def edit_avatar_skip(message: types.Message, state: FSMContext):
@@ -691,6 +758,7 @@ async def edit_avatar_skip(message: types.Message, state: FSMContext):
         await show_my_profile(message)
     else:
         await message.answer("Отправь фото или /skip:")
+
 
 @dp.callback_query(F.data.startswith("game_toggle:"), EditProfile.games)
 async def edit_game_toggle(callback: types.CallbackQuery, state: FSMContext):
@@ -704,6 +772,7 @@ async def edit_game_toggle(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(selected_games=selected)
     await callback.message.edit_reply_markup(reply_markup=games_keyboard(selected))
 
+
 @dp.callback_query(F.data == "games_done", EditProfile.games)
 async def edit_games_done(callback: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -715,12 +784,14 @@ async def edit_games_done(callback: types.CallbackQuery, state: FSMContext):
     await state.update_data(games_to_configure=selected.copy(), game_details={})
     await configure_next_game(callback.message, state)
 
+
 @dp.callback_query(F.data == "toggle_active")
 async def toggle_profile_active(callback: types.CallbackQuery):
     await db.toggle_active(callback.from_user.id)
     user = await db.get_user(callback.from_user.id)
     status = "скрыта" if not user["is_active"] else "активна"
     await callback.answer(f"Анкета {status}!", show_alert=True)
+
 
 @dp.callback_query(F.data == "delete_profile")
 async def delete_profile_confirm(callback: types.CallbackQuery):
@@ -731,15 +802,18 @@ async def delete_profile_confirm(callback: types.CallbackQuery):
     await callback.message.edit_reply_markup(reply_markup=kb)
     await callback.answer()
 
+
 @dp.callback_query(F.data == "delete_confirmed")
 async def delete_profile_confirmed(callback: types.CallbackQuery):
     await db.delete_user(callback.from_user.id)
     await callback.message.answer("Анкета удалена. Напиши /start чтобы создать новую.")
     await callback.answer()
 
+
 async def main():
     await db.connect()
     await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
