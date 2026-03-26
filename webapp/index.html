@@ -1538,7 +1538,7 @@ function showNotRegistered() {
       <div class="not-reg-icon">🎮</div>
       <div class="not-reg-title">Нет анкеты</div>
       <div class="not-reg-text">Зарегистрируйся в боте чтобы<br>искать тиммейтов</div>
-      <button class="not-reg-btn" onclick="window.location.href='https://t.me/dota2ankets_bot'">Открыть бота</button>
+      <button class="not-reg-btn" onclick="tg.close(); setTimeout(()=>{ window.location.href='https://t.me/dota2ankets_bot'; }, 300)">Открыть бота</button>
     </div>`;
 }
 
@@ -1937,7 +1937,8 @@ function openMatchChat(userId, username) {
 }
 
 function buyPremium() {
-  window.location.href = 'https://t.me/dota2ankets_bot?start=premium';
+  tg.close();
+  setTimeout(() => { window.location.href = 'https://t.me/dota2ankets_bot?start=premium'; }, 300);
 }
 
 async function loadMyProfile() {
